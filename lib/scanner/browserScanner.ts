@@ -1,5 +1,5 @@
 /**
- * Browser Scanner - Puppeteer Integration
+ * Browser Scanner - Playwright Integration
  * 
  * This module provides browser automation capabilities to eliminate
  * the limitations of static HTML scanning.
@@ -12,15 +12,14 @@
  * - Supports authenticated scanning with cookies
  * 
  * INSTALLATION:
- * npm install puppeteer
+ * npm install playwright
  * 
  * USAGE:
  * import { scanWithBrowser } from './browserScanner';
  * const result = await scanWithBrowser('https://example.com');
  */
 
-// Uncomment when Puppeteer is installed:
-// import puppeteer, { Browser, Page } from 'puppeteer';
+import { chromium, Browser, Page } from 'playwright';
 
 export interface BrowserScanOptions {
   url: string;
@@ -59,7 +58,7 @@ export interface BrowserScanResult {
 }
 
 /**
- * Scan a URL with a real browser (Puppeteer)
+ * Scan a URL with a real browser (Playwright)
  * 
  * This function launches a headless Chrome browser, navigates to the URL,
  * waits for JavaScript to execute, and captures:
@@ -72,20 +71,6 @@ export interface BrowserScanResult {
 export async function scanWithBrowser(
   options: BrowserScanOptions
 ): Promise<BrowserScanResult> {
-  // TEMPORARY: Return mock data until Puppeteer is installed
-  console.warn('⚠️  Browser Scanner not yet implemented. Install Puppeteer first.');
-  return {
-    html: '',
-    consoleLogs: [],
-    networkErrors: [],
-    performance: {
-      domContentLoaded: 0,
-      loadComplete: 0,
-    },
-  };
-
-  /* UNCOMMENT THIS WHEN PUPPETEER IS INSTALLED:
-
   const {
     url,
     waitForSelector,
@@ -101,33 +86,29 @@ export async function scanWithBrowser(
 
   try {
     // Launch browser
-    browser = await puppeteer.launch({
+    browser = await chromium.launch({
       headless: true,
       args: [
         '--no-sandbox',
         '--disable-setuid-sandbox',
         '--disable-dev-shm-usage',
-        '--disable-accelerated-2d-canvas',
-        '--disable-gpu',
       ],
     });
 
-    const page = await browser.newPage();
-
-    // Mobile emulation (optional)
-    if (mobileEmulation) {
-      await page.emulate(puppeteer.devices['iPhone 12']);
-    }
-
-    // Set viewport
-    await page.setViewport({
-      width: mobileEmulation ? 390 : 1920,
-      height: mobileEmulation ? 844 : 1080,
+    const context = await browser.newContext({
+      viewport: mobileEmulation 
+        ? { width: 390, height: 844 } 
+        : { width: 1920, height: 1080 },
+      userAgent: mobileEmulation 
+        ? 'Mozilla/5.0 (iPhone; CPU iPhone OS 14_0 like Mac OS X) AppleWebKit/605.1.15'
+        : undefined,
     });
+
+    const page = await context.newPage();
 
     // Inject cookies for authenticated scanning
     if (cookies && cookies.length > 0) {
-      await page.setCookie(...cookies);
+      await context.addCookies(cookies.map(c => ({ ...c, url })));
     }
 
     // Capture console logs
@@ -151,8 +132,8 @@ export async function scanWithBrowser(
 
     // Navigate to URL
     const startTime = Date.now();
-    const response = await page.goto(url, {
-      waitUntil: 'networkidle2',
+    await page.goto(url, {
+      waitUntil: 'networkidle',
       timeout,
     });
 
@@ -164,9 +145,14 @@ export async function scanWithBrowser(
     }
 
     // Capture performance metrics
-    const performanceTiming = JSON.parse(
-      await page.evaluate(() => JSON.stringify(window.performance.timing))
-    );
+    const performanceTiming = await page.evaluate(() => {
+      const timing = window.performance.timing;
+      return {
+        navigationStart: timing.navigationStart,
+        domContentLoadedEventEnd: timing.domContentLoadedEventEnd,
+        loadEventEnd: timing.loadEventEnd,
+      };
+    });
 
     const performance = {
       domContentLoaded: performanceTiming.domContentLoadedEventEnd - performanceTiming.navigationStart,
@@ -179,27 +165,37 @@ export async function scanWithBrowser(
         const vitals: any = {};
         
         // LCP - Largest Contentful Paint
-        new PerformanceObserver((list) => {
-          const entries = list.getEntries();
-          const lastEntry = entries[entries.length - 1];
-          vitals.LCP = lastEntry.renderTime || lastEntry.loadTime;
-        }).observe({ entryTypes: ['largest-contentful-paint'] });
+        try {
+          const observer = new PerformanceObserver((list) => {
+            const entries = list.getEntries();
+            const lastEntry = entries[entries.length - 1] as any;
+            vitals.LCP = lastEntry.renderTime || lastEntry.loadTime;
+          });
+          observer.observe({ entryTypes: ['largest-contentful-paint'] });
+        } catch (e) {
+          // LCP not supported
+        }
 
         // CLS - Cumulative Layout Shift
-        let clsScore = 0;
-        new PerformanceObserver((list) => {
-          for (const entry of list.getEntries() as any[]) {
-            if (!entry.hadRecentInput) {
-              clsScore += entry.value;
+        try {
+          let clsScore = 0;
+          const clsObserver = new PerformanceObserver((list) => {
+            for (const entry of list.getEntries() as any[]) {
+              if (!entry.hadRecentInput) {
+                clsScore += entry.value;
+              }
             }
-          }
-          vitals.CLS = clsScore;
-        }).observe({ entryTypes: ['layout-shift'] });
+            vitals.CLS = clsScore;
+          });
+          clsObserver.observe({ entryTypes: ['layout-shift'] });
+        } catch (e) {
+          // CLS not supported
+        }
 
-        // Resolve after 3 seconds
-        setTimeout(() => resolve(vitals), 3000);
+        // Resolve after 2 seconds
+        setTimeout(() => resolve(vitals), 2000);
       });
-    });
+    }).catch(() => ({}));
 
     // Get fully-rendered HTML
     const html = await page.content();
@@ -225,7 +221,6 @@ export async function scanWithBrowser(
     if (browser) await browser.close();
     throw new Error(`Browser scan failed: ${error.message}`);
   }
-  */
 }
 
 /**
@@ -247,19 +242,12 @@ export async function testForm(
   successMessage?: string;
   screenshot?: string;
 }> {
-  console.warn('⚠️  Form Testing not yet implemented. Install Puppeteer first.');
-  return {
-    success: false,
-    validationErrors: [],
-  };
-
-  /* UNCOMMENT WHEN PUPPETEER IS INSTALLED:
-
-  const browser = await puppeteer.launch({ headless: true });
-  const page = await browser.newPage();
+  const browser = await chromium.launch({ headless: true });
+  const context = await browser.newContext();
+  const page = await context.newPage();
 
   try {
-    await page.goto(url, { waitUntil: 'networkidle2' });
+    await page.goto(url, { waitUntil: 'networkidle' });
 
     // Wait for form to appear
     await page.waitForSelector(formSelector, { timeout: 5000 });
@@ -267,14 +255,14 @@ export async function testForm(
     // Fill out form fields
     for (const [fieldName, value] of Object.entries(testData)) {
       const selector = `input[name="${fieldName}"], textarea[name="${fieldName}"]`;
-      await page.type(selector, value).catch(() => {
+      await page.fill(selector, value).catch(() => {
         console.warn(`Field ${fieldName} not found`);
       });
     }
 
     // Submit form
     await Promise.all([
-      page.waitForNavigation({ waitUntil: 'networkidle2', timeout: 10000 }).catch(() => {}),
+      page.waitForLoadState('networkidle').catch(() => {}),
       page.click(`${formSelector} button[type="submit"], ${formSelector} input[type="submit"]`),
     ]);
 
@@ -306,7 +294,6 @@ export async function testForm(
     await browser.close();
     throw error;
   }
-  */
 }
 
 /**
