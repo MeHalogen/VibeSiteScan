@@ -16,6 +16,7 @@ export function ScanInitializer() {
     selectedStageId: null,
     logs: [],
   });
+  const [showPipeline, setShowPipeline] = useState(false);
 
   const handleStartScan = async (config: ScanConfig) => {
     // Transition to running phase
@@ -82,11 +83,26 @@ export function ScanInitializer() {
         ndjsonEvents(response.body)
       );
 
+      // Fetch the full result using the scanId
+      let fullResult = result;
+      if (result?.id) {
+        try {
+          const resultResponse = await fetch(`/api/demo-scan/result/${result.id}`);
+          if (resultResponse.ok) {
+            const data = await resultResponse.json();
+            // Use the scan object which has all the formatted data
+            fullResult = data.scan || data.result || result;
+          }
+        } catch (err) {
+          console.error("Failed to fetch full result:", err);
+        }
+      }
+
       // Transition to complete
       setScanState(prev => ({
         ...prev,
         phase: "complete",
-        result,
+        result: fullResult,
         completedAt: new Date(),
       }));
 
@@ -153,7 +169,7 @@ export function ScanInitializer() {
           />
         )}
 
-        {(scanState.phase === "complete" || scanState.phase === "error") && (
+        {(scanState.phase === "complete" || scanState.phase === "error") && !showPipeline && (
           <ScanCompleteSummary
             key="complete"
             result={scanState.result}
@@ -164,6 +180,21 @@ export function ScanInitializer() {
             completedAt={scanState.completedAt}
             onRetry={handleRetry}
             onReset={handleReset}
+            onViewPipeline={() => setShowPipeline(true)}
+          />
+        )}
+
+        {(scanState.phase === "complete" || scanState.phase === "error") && showPipeline && (
+          <PipelineView
+            key="pipeline-complete"
+            config={scanState.config!}
+            stages={scanState.stages}
+            logs={scanState.logs}
+            selectedStageId={scanState.selectedStageId}
+            onStageSelect={handleStageSelect}
+            scanId={scanState.scanId}
+            startedAt={scanState.startedAt}
+            onViewSummary={() => setShowPipeline(false)}
           />
         )}
       </AnimatePresence>

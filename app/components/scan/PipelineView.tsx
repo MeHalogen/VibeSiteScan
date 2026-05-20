@@ -12,6 +12,7 @@ interface PipelineViewProps {
   onStageSelect: (stageId: string) => void;
   scanId?: string;
   startedAt?: Date;
+  onViewSummary?: () => void;
 }
 
 export function PipelineView({
@@ -22,6 +23,7 @@ export function PipelineView({
   onStageSelect,
   scanId,
   startedAt,
+  onViewSummary,
 }: PipelineViewProps) {
   const [elapsedTime, setElapsedTime] = useState(0);
 
@@ -113,6 +115,7 @@ export function PipelineView({
       targetUrl={config.targetUrl}
       scanId={scanId}
       scanModeLabel={scanModeLabel}
+      onViewSummary={onViewSummary}
     />
   );
 }
