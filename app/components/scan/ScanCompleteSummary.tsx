@@ -109,7 +109,8 @@ export function ScanCompleteSummary({
   }
 
   // Determine display based on score mode
-  const isDiagnosticOnly = scoreMode === 'diagnostic_only' || launchDecision === 'diagnostic_only';
+  // Only treat as diagnostic when target fit is actually limited — not just because coverage is low
+  const isDiagnosticOnly = targetFit === 'limited' && (scoreMode === 'diagnostic_only' || launchDecision === 'diagnostic_only');
 
   // Get launch decision colors and icons
   const getLaunchDecisionConfig = () => {
@@ -548,15 +549,10 @@ export function ScanCompleteSummary({
           transition={{ delay: 0.9 }}
           className="flex flex-col sm:flex-row gap-4 justify-center"
         >
-          {!isDiagnosticOnly && (
+          {scanId && (
             <button
               onClick={() => {
-                try {
-                  window.location.href = `/dashboard/reports/pipeline-result?scanId=${scanId}`;
-                } catch (e) {
-                  console.error('Storage error:', e);
-                  window.location.href = `/dashboard/reports/pipeline-result?scanId=${scanId}`;
-                }
+                window.location.href = `/dashboard/reports/pipeline-result?scanId=${scanId}`;
               }}
               className="flex items-center justify-center gap-2 px-8 py-4 bg-gradient-to-r from-emerald-600 to-green-700 hover:from-emerald-500 hover:to-green-600 text-white font-bold rounded-lg transition-all shadow-lg shadow-emerald-500/20 font-mono"
             >

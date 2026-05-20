@@ -1075,8 +1075,8 @@ export async function runScan(
   }
   emit({ type: 'stage_end', stageId: 'links', status: 'completed', metrics: { linksChecked: linksToCheck.length, linksTotal: linksToCheck.length } });
 
-  // Browser checks status (not implemented in current version)
-  emit({ type: 'stage_end', stageId: 'browser', status: 'skipped', message: 'Browser checks not enabled (Playwright/Puppeteer)' });
+  // Browser checks with Playwright
+  emit({ type: 'stage_start', stageId: 'browser', message: 'Running browser health checks' });
   const browserChecks: BrowserChecksData = {
     browserChecksStatus: 'skipped',
     consoleErrors: [],
@@ -1084,6 +1084,52 @@ export async function runScan(
     pageErrors: [],
     failedNetworkRequests: [],
   };
+
+  try {
+    const { scanWithBrowser } = await import('./browserScanner');
+    const browserResult = await scanWithBrowser({ 
+      url: rootUrl, 
+      timeout: 15000,
+      screenshot: false 
+    });
+
+    browserChecks.browserChecksStatus = 'completed';
+    browserChecks.consoleErrors = browserResult.consoleLogs
+      .filter(log => log.type === 'error')
+      .map(log => ({ 
+        pageUrl: rootUrl, 
+        eventType: 'error' as const, 
+        message: log.text, 
+        timestamp: log.timestamp 
+      }));
+    browserChecks.consoleWarnings = browserResult.consoleLogs
+      .filter(log => log.type === 'warn')
+      .map(log => ({ 
+        pageUrl: rootUrl, 
+        eventType: 'warning' as const, 
+        message: log.text, 
+        timestamp: log.timestamp 
+      }));
+    browserChecks.pageErrors = browserResult.networkErrors.map(err => err.errorText);
+    browserChecks.failedNetworkRequests = browserResult.networkErrors.map(err => ({ 
+      url: err.url, 
+      error: err.errorText 
+    }));
+
+    emit({ 
+      type: 'stage_end', 
+      stageId: 'browser', 
+      status: 'completed', 
+      metrics: { 
+        consoleErrors: browserChecks.consoleErrors.length,
+        consoleWarnings: browserChecks.consoleWarnings.length,
+        networkErrors: browserChecks.failedNetworkRequests.length
+      } 
+    });
+  } catch (error) {
+    console.warn('Browser checks failed:', error);
+    emit({ type: 'stage_end', stageId: 'browser', status: 'failed', message: 'Browser checks failed' });
+  }
 
   // Generate issues using knowledge base
   emit({ type: 'stage_start', stageId: 'seo', message: 'Analyzing metadata' });
@@ -1117,7 +1163,19 @@ export async function runScan(
     );
   }
 
-  // Calculate score
+  // Add browser check issues
+  if (browserChecks.browserChecksStatus === 'completed') {
+    for (const err of browserChecks.consoleErrors) {
+      issues.push(
+        createIssueFromCode(
+          'console_error',
+          err.pageUrl || rootUrl,
+          err.message,
+          {}
+        )
+      );
+    }
+  }
   emit({ type: 'stage_start', stageId: 'report', message: 'Computing launch decision' });
   const score = calculateScore(issues);
 

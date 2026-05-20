@@ -2,6 +2,7 @@
 
 import { useState, useMemo } from 'react';
 import Link from 'next/link';
+import { useSearchParams } from 'next/navigation';
 import { getLaunchDecision } from '@/lib/product-language';
 import { groupIssuesIntoActions, generateAIFixPrompt } from '@/lib/issue-grouping';
 import { detectDuplicateMetadata } from '@/lib/route-classification';
@@ -57,6 +58,8 @@ export default function TerminalReportPage({ scan, result }: ReportPageProps) {
   const [selectedIssue, setSelectedIssue] = useState<any>(null);
   const [selectedPage, setSelectedPage] = useState<any>(null);
   const [linkFilter, setLinkFilter] = useState<'all' | 'internal' | 'external' | 'broken' | 'redirects' | 'ignored'>('all');
+  const searchParams = useSearchParams();
+  const scanId = searchParams.get('scanId');
 
   // Handle both pipeline and traditional data structures
   const scanData = scan as any;
@@ -167,12 +170,22 @@ export default function TerminalReportPage({ scan, result }: ReportPageProps) {
                 <div className="text-[9px] text-tertiary font-mono tracking-widest uppercase">Intelligence System</div>
               </div>
             </Link>
-            <Link
-              href="/dashboard/new-scan-pipeline"
-              className="px-5 py-2.5 text-xs font-mono font-semibold bg-emerald-600 hover:bg-emerald-500 text-white rounded transition-all uppercase tracking-widest"
-            >
-              NEW SCAN
-            </Link>
+            <div className="flex items-center gap-3">
+              {scanId && (
+                <button
+                  onClick={() => window.history.back()}
+                  className="px-5 py-2.5 text-xs font-mono font-semibold border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 rounded transition-all uppercase tracking-widest flex items-center gap-2"
+                >
+                  ← PIPELINE
+                </button>
+              )}
+              <Link
+                href="/dashboard/new-scan-pipeline"
+                className="px-5 py-2.5 text-xs font-mono font-semibold bg-emerald-600 hover:bg-emerald-500 text-white rounded transition-all uppercase tracking-widest"
+              >
+                NEW SCAN
+              </Link>
+            </div>
           </div>
 
           {/* Scan Info */}
