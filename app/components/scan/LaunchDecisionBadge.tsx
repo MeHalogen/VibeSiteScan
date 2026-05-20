@@ -1,7 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
-import { CheckCircle2, AlertTriangle, XCircle } from "lucide-react";
+import { CheckCircle2, AlertTriangle, XCircle, Info } from "lucide-react";
 import { getLaunchDecision } from "@/lib/product-language";
 
 interface LaunchDecisionBadgeProps {
@@ -9,17 +9,25 @@ interface LaunchDecisionBadgeProps {
     critical_issues_count?: number;
     warning_issues_count?: number;
     launch_score?: number;
+    launch_decision?: string;
+    score_mode?: string;
+    target_fit?: string;
   };
   size?: 'default' | 'large';
 }
 
 function LaunchDecisionBadge({ scan, size = 'default' }: LaunchDecisionBadgeProps) {
-  const decision = getLaunchDecision(scan);
+  // Check for diagnostic-only mode
+  const isDiagnosticOnly = scan.launch_decision === 'diagnostic_only' || scan.score_mode === 'diagnostic_only';
+
+  const decision = isDiagnosticOnly 
+    ? { status: 'diagnostic' as const, message: 'This site is outside our ideal target. We checked what we could, but we are not assigning a share-readiness decision.', canShip: true }
+    : getLaunchDecision(scan);
 
   const statusConfig = {
     safe: {
       icon: CheckCircle2,
-      label: "Safe to Share",
+      label: "Ready to Share",
       color: "text-green-400",
       bg: "bg-green-500/10",
       border: "border-green-500/30",
@@ -35,11 +43,19 @@ function LaunchDecisionBadge({ scan, size = 'default' }: LaunchDecisionBadgeProp
     },
     block: {
       icon: XCircle,
-      label: "Do Not Ship Yet",
+      label: "Do Not Share Yet",
       color: "text-red-400",
       bg: "bg-red-500/10",
       border: "border-red-500/30",
       glow: "shadow-red-500/20",
+    },
+    diagnostic: {
+      icon: Info,
+      label: "Diagnostic Report Only",
+      color: "text-blue-400",
+      bg: "bg-blue-500/10",
+      border: "border-blue-500/30",
+      glow: "shadow-blue-500/20",
     },
   };
 
@@ -65,7 +81,14 @@ function LaunchDecisionBadge({ scan, size = 'default' }: LaunchDecisionBadgeProp
       <p className="text-slate-300 leading-relaxed max-w-2xl mx-auto">
         {decision.message}
       </p>
-      {!decision.canShip && (
+      {isDiagnosticOnly && (
+        <div className="mt-4 p-3 bg-blue-500/10 rounded-lg border border-blue-500/20">
+          <p className="text-blue-300 text-sm">
+            This does not mean the site is poor quality. Large enterprise websites are outside the ideal use case for launch-readiness checks.
+          </p>
+        </div>
+      )}
+      {!decision.canShip && !isDiagnosticOnly && (
         <div className="mt-4 p-3 bg-red-500/10 rounded-lg border border-red-500/20">
           <p className="text-red-400 text-sm font-medium">
             ⚠️ Critical blockers detected. Fix these before sharing publicly.
