@@ -55,9 +55,10 @@ export const PRODUCT_LANGUAGE = {
 
   // Launch decision
   decision: {
-    safe: "Safe to Share",
+    safe: "Ready to Share",
     fix: "Fix Before Sharing",
-    block: "Do Not Ship Yet",
+    block: "Do Not Share Yet",
+    diagnostic: "Diagnostic Report Only",
   },
 
   // Scan modes
@@ -87,6 +88,51 @@ export const PRODUCT_LANGUAGE = {
     target: "Built for AI-generated websites, landing pages, SaaS MVPs, and fast-shipped projects.",
     why: "AI can build the page. It usually won't remember your favicon, OG image, canonical tags, sitemap, robots.txt, broken routes, or share preview. LaunchScan checks those before your audience does.",
     rescan: "Fixed something? Run LaunchScan again and verify before sharing.",
+    diagnosticOnly: "This site is outside our ideal target. We checked what we could, but we are not assigning a share-readiness decision.",
+    enterpriseTarget: "This appears to be a large, mature enterprise website. LaunchScan is optimized for AI-built sites, MVPs, landing pages, portfolios, and client previews — not full enterprise websites.",
+    coverageNote: "Coverage affects confidence, not website quality.",
+    limitedDiagnostic: "This is a limited diagnostic, not a full audit.",
+  },
+
+  // Diagnostic state messaging
+  diagnostic: {
+    badge: "DIAGNOSTIC COMPLETE",
+    title: "Diagnostic Report Only",
+    subtitle: "This site is outside our ideal target. We checked what we could, but we are not assigning a share-readiness decision.",
+    disclaimer: "This does not mean the site is poor quality. It means this scan is only a limited public launch-hygiene diagnostic.",
+    scopeNote: "This report reflects only public launch-hygiene checks we could verify. Skipped or unavailable checks reduce coverage and confidence, not the site's quality.",
+    whyTitle: "Why this result is diagnostic only",
+    whyBody: "Large enterprise websites often have complex infrastructure, redirects, regional routing, bot protections, huge page graphs, and intentional SEO/security configurations. A simple launch-readiness decision would be misleading.",
+    ctaTitle: "Want an accurate readiness decision?",
+    ctaBody: "Scan an AI-built site, MVP, landing page, portfolio, or client preview link to get a full launch-readiness decision with actionable recommendations.",
+    trySuggestions: [
+      "Your Lovable app",
+      "Your Bolt site", 
+      "Your Cursor-built landing page",
+      "Your portfolio",
+      "Your MVP landing page",
+      "Your client preview link"
+    ],
+    checksPerformed: [
+      "Public launch hygiene",
+      "Share preview tags",
+      "Metadata completeness",
+      "Link health",
+      "Route discoverability",
+      "Indexing basics",
+      "Form structure",
+      "Browser/mobile basics"
+    ],
+    checksNotPerformed: [
+      "Brand quality",
+      "SEO authority",
+      "Enterprise SEO strategy",
+      "Full accessibility compliance",
+      "Full security posture",
+      "Business credibility",
+      "Ranking potential",
+      "Full performance quality"
+    ]
   },
 
   // CTA buttons
@@ -120,11 +166,22 @@ export function getLaunchDecision(scan: {
   critical_issues_count?: number;
   warning_issues_count?: number;
   launch_score?: number;
+  launch_decision?: string;
+  score_mode?: string;
 }): {
   status: keyof typeof PRODUCT_LANGUAGE.decision;
   message: string;
   canShip: boolean;
 } {
+  // Check for diagnostic-only mode first
+  if (scan.launch_decision === 'diagnostic_only' || scan.score_mode === 'diagnostic_only') {
+    return {
+      status: 'diagnostic',
+      message: 'This site is outside our ideal target. We checked what we could, but we are not assigning a share-readiness decision.',
+      canShip: true,
+    };
+  }
+
   const criticalCount = scan.critical_issues_count || 0;
   const warningCount = scan.warning_issues_count || 0;
   const score = scan.launch_score || 0;
