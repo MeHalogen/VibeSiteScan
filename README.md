@@ -1,36 +1,81 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# LaunchScan
 
-## Getting Started
+**LaunchScan** is a one-click pre-launch website QA scanner for freelancers, web agencies, SEO teams, and startup founders. Scan any website for broken links, SEO issues, forms, and mobile readiness before your clients or customers find the problems.
 
-First, run the development server:
+## 🌟 Features
 
+- **Homepage & Multi-Page Scanning**: Quick scan (homepage only) or Standard scan (up to 25 pages)
+- **Broken Link Detection**: Find all 404s and dead links
+- **SEO Analysis**: Title, meta descriptions, H1 headings, canonical URLs
+- **Social Media Preview**: Open Graph and Twitter card validation
+- **Mobile Readiness**: Viewport configuration checks
+- **Form Analysis**: Detect forms and accessibility issues
+- **Launch Score**: 0-100 score based on issues found
+- **Shareable Reports**: Generate public share links
+- **Export Options**: CSV and PDF export
+
+## 🛠 Tech Stack
+
+- Next.js 14 (App Router), React, TypeScript
+- Tailwind CSS
+- Supabase (PostgreSQL)
+- Custom scanner using Cheerio and cross-fetch
+- Vercel-ready deployment
+
+## 🚀 Quick Start
+
+### 1. Install Dependencies
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### 2. Set Up Supabase
+1. Create project at supabase.com
+2. Run SQL migration from supabase/migrations/001_init.sql
+3. Get API keys from Project Settings > API
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+### 3. Configure Environment
+Create `.env.local`:
+```
+NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+NEXT_PUBLIC_SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_ROLE_KEY=your-service-role-key
+NEXT_PUBLIC_APP_URL=http://localhost:3000
+```
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+### 4. Run Development Server
+```bash
+npm run dev
+```
 
-## Learn More
+Visit http://localhost:3000
 
-To learn more about Next.js, take a look at the following resources:
+## 📊 How It Works
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+1. User enters URL and selects scan depth
+2. Scanner fetches homepage + discovers internal links
+3. Analyzes SEO metadata, forms, broken links
+4. Calculates Launch Score (0-100)
+5. Saves results to Supabase
+6. Displays report with issues, fixes, and export options
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+## 🛣 Roadmap
 
-## Deploy on Vercel
+**MVP (Current):**
+- ✅ URL scanning
+- ✅ Broken links
+- ✅ SEO checks
+- ✅ Share links
+- ✅ CSV/PDF export
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+**Future:**
+- Auth integration
+- Usage limits
+- Scheduled scans
+- Email alerts
+- White-label reports
+- Agency workspaces
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+## 📝 License
+
+MIT - Built for freelancers and agencies 🚀
