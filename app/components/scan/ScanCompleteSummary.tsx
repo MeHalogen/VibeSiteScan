@@ -25,6 +25,7 @@ interface ScanCompleteSummaryProps {
   completedAt?: Date;
   onRetry: () => void;
   onReset: () => void;
+  onViewPipeline?: () => void;
 }
 
 export function ScanCompleteSummary({
@@ -36,6 +37,7 @@ export function ScanCompleteSummary({
   completedAt,
   onRetry,
   onReset,
+  onViewPipeline,
 }: ScanCompleteSummaryProps) {
   const duration = startedAt && completedAt 
     ? ((completedAt.getTime() - startedAt.getTime()) / 1000).toFixed(1)
@@ -352,6 +354,15 @@ export function ScanCompleteSummary({
             <FileText className="w-5 h-5" />
             OPEN FULL REPORT
           </button>
+          {onViewPipeline && (
+            <button
+              onClick={onViewPipeline}
+              className="flex items-center justify-center gap-2 px-8 py-4 intel-panel-dark hover:bg-slate-700 text-primary font-bold rounded-lg transition-all font-mono border border-emerald-500/30"
+            >
+              <TrendingUp className="w-5 h-5" />
+              VIEW PIPELINE
+            </button>
+          )}
           <button
             onClick={onReset}
             className="flex items-center justify-center gap-2 px-8 py-4 intel-panel-dark hover:bg-slate-700 text-primary font-bold rounded-lg transition-all font-mono"

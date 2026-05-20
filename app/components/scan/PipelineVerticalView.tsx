@@ -27,6 +27,7 @@ interface PipelineVerticalViewProps {
   targetUrl?: string;
   scanId?: string;
   scanModeLabel?: string;
+  onViewSummary?: () => void;
 }
 
 function getMetric(
@@ -72,15 +73,23 @@ export function PipelineVerticalView({
   targetUrl,
   scanId,
   scanModeLabel = 'Launch check',
+  onViewSummary,
 }: PipelineVerticalViewProps) {
   const [selectedStageId, setSelectedStageId] = useState(stages[0]?.id || 'init');
+  const [userHasManuallySelected, setUserHasManuallySelected] = useState(false);
 
   useEffect(() => {
     const runningStage = stages.find((s) => s.status === 'running');
-    if (runningStage && isRunning) {
+    // Only auto-switch to running stage if user hasn't manually selected a stage
+    if (runningStage && isRunning && !userHasManuallySelected) {
       setSelectedStageId(runningStage.id);
     }
-  }, [stages, isRunning]);
+  }, [stages, isRunning, userHasManuallySelected]);
+
+  const handleStageSelect = (stageId: string) => {
+    setSelectedStageId(stageId);
+    setUserHasManuallySelected(true);
+  };
 
   const selectedStage = stages.find((s) => s.id === selectedStageId) || stages[0];
   const runningStage = stages.find((s) => s.status === 'running');
@@ -245,7 +254,7 @@ export function PipelineVerticalView({
                 key={stage.id}
                 stage={stage}
                 isActive={stage.id === selectedStageId}
-                onClick={() => setSelectedStageId(stage.id)}
+                onClick={() => handleStageSelect(stage.id)}
                 showConnector={index < stages.length - 1}
               />
             ))}
@@ -258,6 +267,14 @@ export function PipelineVerticalView({
               {progress}% complete
               {estimateRemaining() && ` · ~${estimateRemaining()} left`}
             </div>
+            {!isRunning && onViewSummary && (
+              <button
+                onClick={onViewSummary}
+                className="mt-3 w-full px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white font-mono text-xs tracking-widest uppercase transition-colors rounded"
+              >
+                VIEW SUMMARY
+              </button>
+            )}
           </div>
         </div>
 

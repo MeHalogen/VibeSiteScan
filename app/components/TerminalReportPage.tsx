@@ -148,66 +148,56 @@ export default function TerminalReportPage({ scan, result }: ReportPageProps) {
     return groups;
   }, [issuesData]);
 
-  const scoreColor = scan.launch_score >= 80 ? '#00ff88' : scan.launch_score >= 60 ? '#ffaa00' : '#ff3366';
-  const scoreStatus = scan.launch_score >= 80 ? 'READY' : scan.launch_score >= 60 ? 'REVIEW' : 'CRITICAL';
+  const scoreColor = scan.launch_score >= 80 ? 'text-emerald-400' : scan.launch_score >= 60 ? 'text-amber-400' : 'text-red-400';
+  const scoreStatus = scan.launch_score >= 80 ? 'SAFE TO SHARE' : scan.launch_score >= 60 ? 'FIX BEFORE SHARING' : 'DO NOT SHIP';
+  const scoreBorder = scan.launch_score >= 80 ? 'border-emerald-500/30' : scan.launch_score >= 60 ? 'border-amber-500/30' : 'border-red-500/30';
 
   return (
-    <div className="min-h-screen bg-[#0a0e1a] text-[#e0e7ff] font-['JetBrains_Mono',monospace]">
-      {/* Terminal Header */}
-      <header className="border-b border-[#1e293b] bg-[#0f1419] sticky top-0 z-50 shadow-lg shadow-black/50">
-        <div className="w-full px-4 py-4">
+    <div className="launch-console scanline-overlay min-h-screen bg-coord-grid-dark">
+      {/* Header */}
+      <header className="intel-panel-dark border-b border-white/10 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex items-center justify-between mb-4">
-            <Link href="/dashboard/new-scan" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 bg-gradient-to-br from-cyan-500 to-blue-600 rounded flex items-center justify-center shadow-lg shadow-cyan-500/30 group-hover:shadow-cyan-500/50 transition-all">
-                <span className="text-white font-bold text-xl">λ</span>
+            <Link href="/dashboard/new-scan-pipeline" className="flex items-center gap-3 group">
+              <div className="w-10 h-10 bg-emerald-600 rounded flex items-center justify-center">
+                <span className="text-white font-bold text-xl font-mono">L</span>
               </div>
               <div>
-                <div className="text-lg font-bold text-cyan-400 tracking-wide">LAUNCHSCAN</div>
-                <div className="text-[10px] text-slate-500 tracking-wider">FORENSIC_AUDIT_v2.0</div>
+                <div className="text-lg font-bold text-primary font-mono tracking-wide">LAUNCHSCAN</div>
+                <div className="text-[9px] text-tertiary font-mono tracking-widest uppercase">Intelligence System</div>
               </div>
             </Link>
             <Link
-              href="/dashboard/new-scan"
-              className="px-5 py-2.5 text-sm font-semibold bg-gradient-to-r from-cyan-500 to-blue-600 rounded border border-cyan-400/30 hover:border-cyan-400/60 transition-all shadow-lg shadow-cyan-500/20 hover:shadow-cyan-500/40 uppercase tracking-wider"
+              href="/dashboard/new-scan-pipeline"
+              className="px-5 py-2.5 text-xs font-mono font-semibold bg-emerald-600 hover:bg-emerald-500 text-white rounded transition-all uppercase tracking-widest"
             >
-              → NEW_SCAN
+              NEW SCAN
             </Link>
           </div>
 
           {/* Scan Info */}
-          <div className="bg-[#151b2b] border border-emerald-500/20 rounded-lg p-4 mb-4">
+          <div className={`intel-panel-dark border ${scoreBorder} rounded-lg p-4 mb-4`}>
             <div className="flex items-start justify-between">
               <div className="flex-1">
-                <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">Site Checked</div>
-                <h1 className="text-xl font-bold text-emerald-400 mb-2 break-all">{scan.target_url}</h1>
-                <div className="flex items-center gap-4 text-xs text-slate-400">
-                  <span className="flex items-center gap-1">
-                    <span className="text-slate-600">●</span> {new Date(scan.created_at).toLocaleString()}
+                <div className="classified-stamp mb-2">LAUNCH REPORT</div>
+                <h1 className="text-xl font-bold text-primary font-mono mb-2 break-all">{scan.target_url}</h1>
+                <div className="flex items-center gap-4 text-xs text-secondary font-mono">
+                  <span className="flex items-center gap-1.5">
+                    <span className="signal-dot active" />
+                    {new Date(scan.created_at).toLocaleString()}
                   </span>
-                  <span className="flex items-center gap-1">
-                    <span className="text-slate-600">●</span> {scan.scan_depth === 'quick' ? 'Quick Check' : 'Launch Check'}
-                  </span>
-                  <span className="flex items-center gap-1">
-                    <span className="text-slate-600">●</span> {(scan.duration_ms / 1000).toFixed(2)}s
-                  </span>
+                  <span className="text-white/20">•</span>
+                  <span>{scan.scan_depth === 'quick' ? 'Quick Scan' : 'Full Scan'}</span>
+                  <span className="text-white/20">•</span>
+                  <span>{(scan.duration_ms / 1000).toFixed(1)}s</span>
                 </div>
               </div>
-              <div className="text-right">
-                <div className="text-xs text-slate-500 uppercase tracking-wider mb-1">Launch Readiness</div>
-                <div 
-                  className="text-5xl font-bold mb-1"
-                  style={{ color: scoreColor, textShadow: `0 0 20px ${scoreColor}80` }}
-                >
+              <div className="telemetry-cell text-right px-6 py-4">
+                <div className="text-xs text-tertiary font-mono uppercase tracking-widest mb-1">Launch Score</div>
+                <div className={`text-5xl font-bold font-mono mb-1 ${scoreColor}`}>
                   {scan.launch_score}
                 </div>
-                <div 
-                  className="text-xs font-bold uppercase tracking-wider px-2 py-1 rounded"
-                  style={{ 
-                    color: scoreColor,
-                    backgroundColor: `${scoreColor}20`,
-                    border: `1px solid ${scoreColor}40`
-                  }}
-                >
+                <div className={`text-xs font-mono font-bold uppercase tracking-wider ${scoreColor}`}>
                   {scoreStatus}
                 </div>
               </div>
@@ -215,23 +205,21 @@ export default function TerminalReportPage({ scan, result }: ReportPageProps) {
           </div>
 
           {/* Tabs */}
-          <div className="flex items-center gap-1 overflow-x-auto pb-1 scrollbar-thin scrollbar-thumb-slate-700 scrollbar-track-transparent">
+          <div className="flex items-center gap-1 overflow-x-auto pb-1">
             {tabs.map((tab) => (
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`px-4 py-2 text-xs font-semibold rounded transition-all whitespace-nowrap uppercase tracking-wider ${
+                className={`px-4 py-2 text-xs font-mono font-semibold transition-all whitespace-nowrap uppercase tracking-wider border-b-2 ${
                   activeTab === tab.id
-                    ? 'bg-gradient-to-r from-cyan-500/20 to-blue-600/20 text-cyan-400 border border-cyan-500/50 shadow-lg shadow-cyan-500/20'
-                    : 'bg-[#151b2b] text-slate-400 border border-transparent hover:border-slate-600 hover:text-slate-300'
+                    ? 'border-emerald-400 text-emerald-400'
+                    : 'border-transparent text-secondary hover:text-primary'
                 }`}
               >
-                <span className="mr-2">{tab.icon}</span>
+                <span className="mr-2 text-emerald-400/50">{tab.icon}</span>
                 {tab.label}
                 {tab.count !== undefined && (
-                  <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] ${
-                    activeTab === tab.id ? 'bg-cyan-500/30' : 'bg-slate-700/50'
-                  }`}>
+                  <span className={`ml-2 px-1.5 py-0.5 rounded text-[10px] intel-panel-dark`}>
                     {tab.count}
                   </span>
                 )}
@@ -242,8 +230,8 @@ export default function TerminalReportPage({ scan, result }: ReportPageProps) {
       </header>
 
       {/* Content */}
-      <main className="w-full px-4 py-6">
-        {activeTab === 'overview' && <OverviewTab scan={scan} result={result} scoreColor={scoreColor} />}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {activeTab === 'overview' && <OverviewTab scan={scan} result={result} scoreColor={scoreColor.replace('text-', '')} />}
         {activeTab === 'crawl-map' && <CrawlMapTab pages={pagesData} />}
         {activeTab === 'pages' && <PagesTab pages={pagesData} onSelectPage={setSelectedPage} />}
         {activeTab === 'links' && <LinksTab links={filteredLinks} filter={linkFilter} onFilterChange={setLinkFilter} allLinks={resultData?.linkResults || []} />}
@@ -279,22 +267,22 @@ function OverviewTab({ scan, result, scoreColor }: any) {
   return (
     <div className="space-y-6">
       {/* Launch Decision - Hero */}
-      <div className="bg-gradient-to-br from-slate-900/50 to-slate-800/30 border border-emerald-500/20 rounded-xl p-8">
+      <div className="intel-panel-dark border-emerald-500/20 rounded-xl p-8">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-6">
           <div className="flex-1">
-            <h2 className="text-sm font-semibold text-emerald-400 uppercase tracking-wide mb-3">
+            <h2 className="text-xs font-mono font-semibold text-emerald-400 uppercase tracking-widest mb-3">
               Launch Readiness
             </h2>
             <LaunchDecisionBadge scan={scan} size="large" />
-            <p className="text-slate-300 mt-4 text-lg leading-relaxed">
+            <p className="text-secondary mt-4 text-base leading-relaxed font-mono">
               {decision.message}
             </p>
           </div>
-          <div className="text-right">
-            <div className="text-5xl font-bold" style={{ color: scoreColor }}>
+          <div className="telemetry-cell text-right px-6 py-4">
+            <div className={`text-5xl font-bold font-mono ${scoreColor}`}>
               {scan.launch_score}
             </div>
-            <div className="text-sm text-slate-400 mt-1">out of 100</div>
+            <div className="text-xs text-tertiary mt-1 font-mono uppercase tracking-wider">out of 100</div>
           </div>
         </div>
       </div>
@@ -308,73 +296,73 @@ function OverviewTab({ scan, result, scoreColor }: any) {
       </div>
 
       {/* What We Checked */}
-      <div className="bg-slate-900/30 border border-slate-700/50 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-slate-200 mb-4 flex items-center gap-2">
-          <span className="text-emerald-400">✓</span> What we checked
+      <div className="intel-panel-dark rounded-xl p-6">
+        <h3 className="text-sm font-mono font-semibold text-primary mb-4 flex items-center gap-2 uppercase tracking-wider">
+          <span className="text-emerald-400">◆</span> What we checked
         </h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 flex-shrink-0">
+            <div className="w-8 h-8 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 flex-shrink-0 font-mono text-xs">
               🔗
             </div>
             <div>
-              <div className="font-medium text-slate-200">Links & Navigation</div>
-              <div className="text-sm text-slate-400">Found {scan.discovered_pages_count} routes, checked {scan.pages_count}</div>
+              <div className="font-mono font-medium text-primary text-sm">Links & Navigation</div>
+              <div className="text-xs text-tertiary font-mono">Found {scan.discovered_pages_count} routes, checked {scan.pages_count}</div>
             </div>
           </div>
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 flex-shrink-0">
+            <div className="w-8 h-8 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 flex-shrink-0 font-mono text-xs">
               📱
             </div>
             <div>
-              <div className="font-medium text-slate-200">Share Preview</div>
-              <div className="text-sm text-slate-400">Social media cards & metadata</div>
+              <div className="font-mono font-medium text-primary text-sm">Share Preview</div>
+              <div className="text-xs text-tertiary font-mono">Social media cards & metadata</div>
             </div>
           </div>
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 flex-shrink-0">
+            <div className="w-8 h-8 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 flex-shrink-0 font-mono text-xs">
               📝
             </div>
             <div>
-              <div className="font-medium text-slate-200">Forms</div>
-              <div className="text-sm text-slate-400">Detected {scan.forms_found_count} form(s)</div>
+              <div className="font-mono font-medium text-primary text-sm">Forms</div>
+              <div className="text-xs text-tertiary font-mono">Detected {scan.forms_found_count} form(s)</div>
             </div>
           </div>
           <div className="flex items-start gap-3">
-            <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400 flex-shrink-0">
+            <div className="w-8 h-8 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 flex-shrink-0 font-mono text-xs">
               🖥️
             </div>
             <div>
-              <div className="font-medium text-slate-200">Browser Checks</div>
-              <div className="text-sm text-slate-400">{scan.console_errors_count} console error(s) found</div>
+              <div className="font-mono font-medium text-primary text-sm">Browser Checks</div>
+              <div className="text-xs text-tertiary font-mono">{scan.console_errors_count} console error(s) found</div>
             </div>
           </div>
         </div>
       </div>
 
       {/* Score Transparency */}
-      <div className="bg-slate-900/30 border border-slate-700/50 rounded-xl p-6">
-        <h3 className="text-lg font-semibold text-slate-200 mb-4">How your score is calculated</h3>
+      <div className="intel-panel-dark rounded-xl p-6">
+        <h3 className="text-sm font-mono font-semibold text-primary mb-4 uppercase tracking-wider">How your score is calculated</h3>
         <div className="space-y-3">
           <div className="flex items-center justify-between py-2">
-            <span className="text-slate-300">Starting score</span>
-            <span className="font-mono text-emerald-400">100</span>
+            <span className="text-secondary font-mono text-sm">Starting score</span>
+            <span className="font-mono text-emerald-400 font-bold">100</span>
           </div>
           {scan.critical_issues_count > 0 && (
-            <div className="flex items-center justify-between py-2 border-t border-slate-700/50">
-              <span className="text-slate-300">Blockers (×10 points each)</span>
-              <span className="font-mono text-red-400">-{scan.critical_issues_count * 10}</span>
+            <div className="flex items-center justify-between py-2 border-t border-white/10">
+              <span className="text-secondary font-mono text-sm">Blockers (×10 points each)</span>
+              <span className="font-mono text-red-400 font-bold">-{scan.critical_issues_count * 10}</span>
             </div>
           )}
           {scan.warning_issues_count > 0 && (
-            <div className="flex items-center justify-between py-2 border-t border-slate-700/50">
-              <span className="text-slate-300">Warnings (×2 points each)</span>
-              <span className="font-mono text-amber-400">-{scan.warning_issues_count * 2}</span>
+            <div className="flex items-center justify-between py-2 border-t border-white/10">
+              <span className="text-secondary font-mono text-sm">Warnings (×2 points each)</span>
+              <span className="font-mono text-amber-400 font-bold">-{scan.warning_issues_count * 2}</span>
             </div>
           )}
-          <div className="flex items-center justify-between py-3 border-t-2 border-slate-700/50 font-semibold">
-            <span className="text-slate-200">Final score</span>
-            <span className="font-mono text-2xl" style={{ color: scoreColor }}>
+          <div className="flex items-center justify-between py-3 border-t-2 border-white/10 font-semibold">
+            <span className="text-primary font-mono">Final score</span>
+            <span className={`font-mono text-2xl font-bold ${scoreColor}`}>
               {scan.launch_score}
             </span>
           </div>
@@ -383,21 +371,21 @@ function OverviewTab({ scan, result, scoreColor }: any) {
 
       {/* Next Steps */}
       {issuesData.length > 0 ? (
-        <div className="bg-amber-500/5 border border-amber-500/20 rounded-xl p-6">
-          <h3 className="text-lg font-semibold text-amber-400 mb-3">Next steps</h3>
-          <p className="text-slate-300 mb-4">
-            Switch to the <span className="font-semibold text-amber-400">"Fix Before Shipping"</span> tab to see grouped action items 
+        <div className="intel-panel-dark border-amber-500/20 rounded-xl p-6">
+          <h3 className="text-sm font-mono font-semibold text-amber-400 mb-3 uppercase tracking-wider">Next steps</h3>
+          <p className="text-secondary mb-4 font-mono text-sm">
+            Switch to the <span className="font-semibold text-amber-400">"FIX BEFORE SHIPPING"</span> tab to see grouped action items 
             and copy the AI fix prompt for Cursor, Lovable, or Bolt.
           </p>
-          <div className="text-sm text-slate-400">
-            📋 We've grouped {issuesData.length} issue(s) into actionable fixes
+          <div className="text-xs text-tertiary font-mono">
+            ◆ We've grouped {issuesData.length} issue(s) into actionable fixes
           </div>
         </div>
       ) : (
-        <div className="bg-emerald-500/5 border border-emerald-500/20 rounded-xl p-6 text-center">
-          <div className="text-4xl mb-3">🎉</div>
-          <h3 className="text-xl font-semibold text-emerald-400 mb-2">Ready to share!</h3>
-          <p className="text-slate-300">
+        <div className="intel-panel-dark border-emerald-500/20 rounded-xl p-6 text-center">
+          <div className="text-4xl mb-3">✓</div>
+          <h3 className="text-lg font-mono font-semibold text-emerald-400 mb-2 uppercase">Ready to share!</h3>
+          <p className="text-secondary font-mono text-sm">
             No critical issues found. Your site looks good to launch.
           </p>
         </div>
@@ -1620,13 +1608,9 @@ if (scanMode === 'deep') {
 // Helper Components
 function MetricCard({ label, value, alert }: any) {
   return (
-    <div className={`bg-[#151b2b] border rounded-lg p-4 ${
-      alert ? 'border-red-500/50' : 'border-[#1e293b]'
-    }`}>
-      <div className="text-xs text-slate-500 uppercase mb-1">{label}</div>
-      <div className={`text-2xl font-bold ${
-        alert ? 'text-red-400' : 'text-cyan-400'
-      }`}>
+    <div className={`telemetry-cell p-4 ${alert ? 'border-red-500/30' : 'border-white/10'}`}>
+      <div className="text-xs text-tertiary font-mono uppercase tracking-widest mb-1">{label}</div>
+      <div className={`text-3xl font-bold font-mono ${alert ? 'text-red-400' : 'text-emerald-400'}`}>
         {value}
       </div>
     </div>
