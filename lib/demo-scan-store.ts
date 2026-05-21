@@ -20,10 +20,10 @@ function cleanup(map: Map<string, StoredDemoScan>) {
  * NOTE: This is per-server-instance and resets on restart. For production,
  * persist scans in Supabase and fetch by id.
  */
-const globalForDemo = globalThis as unknown as { __launchscanDemoScans?: Map<string, StoredDemoScan> };
+const globalForDemo = globalThis as unknown as { __vibesitescanDemoScans?: Map<string, StoredDemoScan> };
 
 export const demoScanStore: Map<string, StoredDemoScan> =
-  globalForDemo.__launchscanDemoScans ?? (globalForDemo.__launchscanDemoScans = new Map());
+  globalForDemo.__vibesitescanDemoScans ?? (globalForDemo.__vibesitescanDemoScans = new Map());
 
 export function demoStorePut(scanId: string, scan: any, result: any) {
   cleanup(demoScanStore);

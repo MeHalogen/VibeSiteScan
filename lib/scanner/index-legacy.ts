@@ -3,7 +3,7 @@ import fetch from 'cross-fetch';
 import { normalizeUrl, isPrivateOrLocal, isSameOrigin } from './utils';
 import type { ScanResult, PageData, LinkCheck, Issue, SeoData, ConsoleEvent } from './types';
 
-const USER_AGENT = 'LaunchScanBot/1.0 (+https://launchscan.app)';
+const USER_AGENT = 'VibeSiteScanBot/1.0 (+https://vibesitescan.app)';
 const TIMEOUT = 15000;
 
 async function fetchPage(url: string): Promise<{ finalUrl: string; html: string; status: number }> {

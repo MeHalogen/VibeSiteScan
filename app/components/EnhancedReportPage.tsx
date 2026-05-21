@@ -77,7 +77,7 @@ export default function EnhancedReportPage({ scan, result }: ReportPageProps) {
               <div className="w-8 h-8 bg-emerald-600 rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-lg font-mono">L</span>
               </div>
-              <span className="text-xl font-bold font-mono text-primary">LaunchScan</span>
+              <span className="text-xl font-bold font-mono text-primary">VibeSiteScan</span>
             </Link>
             <Link
               href="/dashboard/new-scan"
@@ -171,11 +171,11 @@ function OverviewTab({ scan, result }: ReportPageProps) {
 
   const generateSummary = () => {
     if (scan.critical_issues_count === 0 && scan.warning_issues_count === 0) {
-      return `Perfect! LaunchScan scanned ${scan.pages_count} page${scan.pages_count > 1 ? 's' : ''} and found no issues. Your site is ready to launch!`;
+      return `Perfect! VibeSiteScan scanned ${scan.pages_count} page${scan.pages_count > 1 ? 's' : ''} and found no issues. Your site is ready to launch!`;
     } else if (scan.critical_issues_count === 0) {
-      return `LaunchScan scanned ${scan.pages_count} page${scan.pages_count > 1 ? 's' : ''} and found ${scan.warning_issues_count} warning${scan.warning_issues_count > 1 ? 's' : ''}. No critical launch blockers were found, so the site appears accessible. Most issues are related to ${getMostCommonCategory()}. Fixing these will improve ${getImpactDescription()} before launch.`;
+      return `VibeSiteScan scanned ${scan.pages_count} page${scan.pages_count > 1 ? 's' : ''} and found ${scan.warning_issues_count} warning${scan.warning_issues_count > 1 ? 's' : ''}. No critical launch blockers were found, so the site appears accessible. Most issues are related to ${getMostCommonCategory()}. Fixing these will improve ${getImpactDescription()} before launch.`;
     } else {
-      return `LaunchScan scanned ${scan.pages_count} page${scan.pages_count > 1 ? 's' : ''} and found ${scan.critical_issues_count} critical issue${scan.critical_issues_count > 1 ? 's' : ''} and ${scan.warning_issues_count} warning${scan.warning_issues_count > 1 ? 's' : ''}. Critical issues must be fixed before launch to ensure site accessibility and functionality.`;
+      return `VibeSiteScan scanned ${scan.pages_count} page${scan.pages_count > 1 ? 's' : ''} and found ${scan.critical_issues_count} critical issue${scan.critical_issues_count > 1 ? 's' : ''} and ${scan.warning_issues_count} warning${scan.warning_issues_count > 1 ? 's' : ''}. Critical issues must be fixed before launch to ensure site accessibility and functionality.`;
     }
   };
 

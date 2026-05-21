@@ -125,7 +125,7 @@
 5. "limited public launch-hygiene diagnostic" (supporting note)
 6. "Why this result is diagnostic only" (section heading)
 7. "This appears to be a large, mature enterprise website" (explanation)
-8. "LaunchScan is optimized for AI-built sites, MVPs, landing pages, portfolios, and client previews" (explanation)
+8. "VibeSiteScan is optimized for AI-built sites, MVPs, landing pages, portfolios, and client previews" (explanation)
 9. "Coverage affects confidence, not website quality" (scope note)
 10. "Want an accurate readiness decision?" (CTA heading)
 

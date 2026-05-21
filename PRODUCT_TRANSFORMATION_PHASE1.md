@@ -1,4 +1,4 @@
-# LaunchScan Product Transformation - Phase 1 Complete
+# VibeSiteScan Product Transformation - Phase 1 Complete
 
 ## What Was Built
 
@@ -98,7 +98,7 @@ Warning: Hash anchors may not represent separate HTML pages
 - Public pages only
 
 **Why This Exists Box:**
-"AI can build the page. It usually won't remember your favicon, OG image, canonical tags, sitemap, robots.txt, broken routes, or share preview. LaunchScan checks those before your audience does."
+"AI can build the page. It usually won't remember your favicon, OG image, canonical tags, sitemap, robots.txt, broken routes, or share preview. VibeSiteScan checks those before your audience does."
 
 **Launch Button:**
 - ✅ "Run Launch Check" (was "LAUNCH_SCAN")

@@ -2,7 +2,7 @@
 
 ## Overview
 
-This is a complete UI/UX refactor of the LaunchScan scanner interface into a **next-generation pipeline-based forensic website scanner** with animated transitions, transparent step-by-step execution, and interactive scan stages.
+This is a complete UI/UX refactor of the VibeSiteScan scanner interface into a **next-generation pipeline-based forensic website scanner** with animated transitions, transparent step-by-step execution, and interactive scan stages.
 
 ## Features
 

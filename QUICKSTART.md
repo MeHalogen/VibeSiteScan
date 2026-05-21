@@ -1,9 +1,9 @@
-# 🎯 LaunchScan v2.0 - Quick Start Guide
+# 🎯 VibeSiteScan v2.0 - Quick Start Guide
 
 ## 🚀 Launch the App
 
 ```bash
-cd /Users/mehalsrivastava/GitHub/launchscan
+cd /Users/mehalsrivastava/GitHub/vibesitescan
 npm run dev
 ```
 
@@ -289,7 +289,7 @@ When testing, you should see:
 
 ## 🎯 Success Criteria
 
-**LaunchScan v2.0 is working perfectly if:**
+**VibeSiteScan v2.0 is working perfectly if:**
 1. ✅ Scan form loads with dark theme
 2. ✅ Scan completes in 5-30 seconds
 3. ✅ Report displays with 12 tabs

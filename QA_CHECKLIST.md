@@ -1,4 +1,4 @@
-# SiteProof - Full QA Checklist
+# VibeSiteScan - Full QA Checklist
 
 **Date:** May 21, 2026
 **Environment:** http://localhost:3002
@@ -61,7 +61,7 @@
 
 ### Page Load
 - [ ] **URL:** `/dashboard/new-scan-pipeline` accessible
-- [ ] **Page title:** Contains "SiteProof"
+- [ ] **Page title:** Contains "VibeSiteScan"
 - [ ] **Layout:** Config form visible
 
 ### Form Elements
@@ -71,7 +71,7 @@
 - [ ] **Scan mode selector:** Quick/Standard options (if present)
 
 ### Branding
-- [ ] **Logo:** Shows "S" or "SiteProof" branding
+- [ ] **Logo:** Shows "S" or "VibeSiteScan" branding
 - [ ] **Page copy:** Uses "proof" language, not generic "scan"
 - [ ] **Context:** Mentions AI builders or share-readiness
 
@@ -163,7 +163,7 @@
 - [ ] **Loading state:** Shows loading indicator while fetching
 
 ### Header
-- [ ] **SiteProof branding:** Logo and name present
+- [ ] **VibeSiteScan branding:** Logo and name present
 - [ ] **Site URL:** Target site shown prominently
 - [ ] **Scan metadata:** Date, time, scan mode displayed
 - [ ] **Decision badge:** Decision shown in header
@@ -210,9 +210,9 @@
 ## ✅ PHASE 6: BRANDING CONSISTENCY
 
 ### Product Name
-- [ ] **No "LaunchScan":** Old name not visible to users
-- [ ] **"SiteProof" used:** New name appears in appropriate places
-- [ ] **Consistent capitalization:** "SiteProof" or "SITE PROOF"
+- [ ] **No "VibeSiteScan":** Old name not visible to users
+- [ ] **"VibeSiteScan" used:** New name appears in appropriate places
+- [ ] **Consistent capitalization:** "VibeSiteScan" or "SITE PROOF"
 
 ### Messaging
 - [ ] **AI builder focus:** Mentions Cursor, Lovable, Bolt, Replit
@@ -221,7 +221,7 @@
 - [ ] **AI fix prompt:** Mentioned as key feature
 
 ### Meta Tags
-- [ ] **Page title:** "SiteProof - Final QA for AI-Built Websites"
+- [ ] **Page title:** "VibeSiteScan - Final QA for AI-Built Websites"
 - [ ] **Description:** Mentions AI builders and fix prompts
 - [ ] **OG tags:** Updated (if implemented)
 

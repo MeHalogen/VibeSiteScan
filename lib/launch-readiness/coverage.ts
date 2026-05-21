@@ -1,7 +1,7 @@
 /**
  * Scan Coverage Calculator
  * 
- * Calculates what percentage of the intended checklist LaunchScan could actually verify.
+ * Calculates what percentage of the intended checklist VibeSiteScan could actually verify.
  */
 
 import { CoverageDetails, CoverageCategory } from './types';

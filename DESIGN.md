@@ -1,4 +1,4 @@
-# LaunchScan Design System
+# VibeSiteScan Design System
 
 ## 🎨 Visual Identity
 

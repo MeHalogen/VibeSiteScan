@@ -1,4 +1,4 @@
-# 🎨 LaunchScan Dual-Theme Visual Guide
+# 🎨 VibeSiteScan Dual-Theme Visual Guide
 
 ## Theme Transition Flow
 
@@ -93,7 +93,7 @@
 │  │ Mode: LAUNCH CHECK | Fit: IDEAL | Duration: 3.2s     │  │
 │  └───────────────────────────────────────────────────────┘  │
 │                                                               │
-│  ⚠️ SCOPE NOTE: LaunchScan checks launch hygiene...         │
+│  ⚠️ SCOPE NOTE: VibeSiteScan checks launch hygiene...         │
 │                                                               │
 │  [OPEN FULL REPORT] ← Emerald green                         │
 │  [SCAN ANOTHER SITE]                                         │
@@ -107,7 +107,7 @@
 │  Theme: LAUNCH CONSOLE (Dark Intel Briefing)                │
 ├─────────────────────────────────────────────────────────────┤
 │  ┌───────────────────────────────────────────────────────┐  │
-│  │ [L] LaunchScan        🏷️ LAUNCH REPORT   [NEW SCAN]  │  │
+│  │ [L] VibeSiteScan        🏷️ LAUNCH REPORT   [NEW SCAN]  │  │
 │  │                                                        │  │
 │  │ https://example.com                                   │  │
 │  │ Scanned Jan 1 • Standard Scan • 3.2s         [85]    │  │
@@ -121,7 +121,7 @@
 │  │                                                        │  │
 │  │ [LAUNCH READINESS: READY] Emerald badge              │  │
 │  │                                                        │  │
-│  │ LaunchScan scanned 12 pages and found 3 warnings.    │  │
+│  │ VibeSiteScan scanned 12 pages and found 3 warnings.    │  │
 │  │ No critical blockers. Most issues related to SEO...  │  │
 │  └───────────────────────────────────────────────────────┘  │
 │                                                               │

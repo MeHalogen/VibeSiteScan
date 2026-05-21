@@ -153,7 +153,7 @@ Site URL: <PASTE_YOUR_URL_HERE>`;
               <span className="font-semibold tracking-tight text-[var(--ink)]">L</span>
             </div>
             <div className="leading-tight">
-              <div className="font-semibold tracking-tight text-[var(--ink)]">LaunchScan</div>
+              <div className="font-semibold tracking-tight text-[var(--ink)]">VibeSiteScan</div>
               <div className="text-xs text-[var(--ink)]/55">Final QA for AI-built websites</div>
             </div>
           </div>
@@ -190,7 +190,7 @@ Site URL: <PASTE_YOUR_URL_HERE>`;
             transition={{ delay: 0.14, duration: 0.5 }}
             className="mt-5 text-base md:text-xl text-[var(--ink)]/65 max-w-4xl mx-auto"
           >
-            LaunchScan catches missing share previews, metadata, broken routes, sitemap, robots.txt, forms, and launch hygiene issues in seconds.
+            VibeSiteScan catches missing share previews, metadata, broken routes, sitemap, robots.txt, forms, and launch hygiene issues in seconds.
           </motion.p>
 
           {/* Command bar */}

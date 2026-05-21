@@ -2,18 +2,18 @@ import { test, expect } from '@playwright/test';
 
 const BASE_URL = 'http://localhost:3002';
 
-test.describe('SiteProof - Full QA Suite', () => {
+test.describe('VibeSiteScan - Full QA Suite', () => {
   
   test.describe('Homepage Tests', () => {
     test('should load homepage successfully', async ({ page }) => {
       await page.goto(BASE_URL);
-      await expect(page).toHaveTitle(/SiteProof/i);
+      await expect(page).toHaveTitle(/VibeSiteScan/i);
     });
 
     test('should display hero section with correct branding', async ({ page }) => {
       await page.goto(BASE_URL);
       
-      // Check for SiteProof branding
+      // Check for VibeSiteScan branding
       await expect(page.locator('text=SITE')).toBeVisible();
       await expect(page.locator('text=PROOF')).toBeVisible();
       
@@ -356,22 +356,22 @@ test.describe('SiteProof - Full QA Suite', () => {
   });
 
   test.describe('Content & Copy Tests', () => {
-    test('should not contain old "LaunchScan" branding', async ({ page }) => {
+    test('should not contain old "VibeSiteScan" branding', async ({ page }) => {
       await page.goto(BASE_URL);
       
       const content = await page.content();
       
       // Should not have old branding (except in comments or metadata)
-      const launchScanCount = (content.match(/LaunchScan/g) || []).length;
+      const launchScanCount = (content.match(/VibeSiteScan/g) || []).length;
       
       // Allow a few instances in meta tags or hidden places
       expect(launchScanCount).toBeLessThan(5);
     });
 
-    test('should contain SiteProof branding', async ({ page }) => {
+    test('should contain VibeSiteScan branding', async ({ page }) => {
       await page.goto(BASE_URL);
       
-      await expect(page.locator('text=SiteProof, text=SITE, text=PROOF')).toHaveCount(1, { timeout: 1000 }).catch(() => true);
+      await expect(page.locator('text=VibeSiteScan, text=SITE, text=PROOF')).toHaveCount(1, { timeout: 1000 }).catch(() => true);
     });
 
     test('should emphasize AI builders', async ({ page }) => {

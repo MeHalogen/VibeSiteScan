@@ -1,11 +1,11 @@
-# SiteProof Product Refactor
+# VibeSiteScan Product Refactor
 
 ## ✅ Phase 1: Complete - Homepage Rebrand
 
 ### Changes Made:
 
 **1. Product Name & Positioning**
-- ✅ Changed from "LaunchScan" to "SiteProof"
+- ✅ Changed from "VibeSiteScan" to "VibeSiteScan"
 - ✅ New tagline: "Final QA for AI-Built Websites"
 - ✅ Hero: "Proof your site before your audience sees it"
 - ✅ Subheadline: "Catch what AI missed before your audience does"
@@ -20,7 +20,7 @@
 - ✅ Updated issues list to "Top Issues Caught" with AI-relevant problems
 
 **3. Meta Data (`app/layout.tsx`)**
-- ✅ Title: "SiteProof - Final QA for AI-Built Websites"
+- ✅ Title: "VibeSiteScan - Final QA for AI-Built Websites"
 - ✅ Description updated to emphasize AI builders and fix prompts
 
 **4. Visual Consistency**
@@ -77,7 +77,7 @@ Create new tab in report: "AI Fix Prompt"
 
 **Template Structure:**
 ```
-You are fixing launch-readiness issues found by SiteProof.
+You are fixing launch-readiness issues found by VibeSiteScan.
 
 Preserve the current design and functionality.
 Fix only the issues listed below.
@@ -168,7 +168,7 @@ Add detailed "Pages Scanned" tab showing:
 
 **Priority: MEDIUM**
 
-Update scan pipeline stages to reflect SiteProof messaging:
+Update scan pipeline stages to reflect VibeSiteScan messaging:
 
 **Current Stages:**
 1. Init
@@ -209,7 +209,7 @@ Update scan pipeline stages to reflect SiteProof messaging:
 **Updates Needed:**
 - Change "Scan" to "Proof"
 - Update button: "Start Proof" or "Proof My Site"
-- Add context: "SiteProof checks public pages for share-readiness"
+- Add context: "VibeSiteScan checks public pages for share-readiness"
 - Update placeholder: "https://your-ai-built-site.com"
 
 ---
@@ -233,9 +233,9 @@ Update scan pipeline stages to reflect SiteProof messaging:
 
 **File:** `lib/product-language.ts`
 
-**Add SiteProof-specific copy:**
+**Add VibeSiteScan-specific copy:**
 ```typescript
-export const SITEPROOF_COPY = {
+export const VIBESITESCAN_COPY = {
   hero: {
     badge: "FINAL QA FOR AI-BUILT SITES",
     headline: "Proof your site before your audience sees it",
@@ -268,7 +268,7 @@ export const SITEPROOF_COPY = {
 ### A. Logo/Brand
 
 **Files to Update:**
-- Update "L" logo to "S" for SiteProof
+- Update "L" logo to "S" for VibeSiteScan
 - Or create "SP" monogram
 - Update in: header, report pages, completion summary
 
@@ -392,7 +392,7 @@ export const SITEPROOF_COPY = {
 ## 🚀 Deployment Checklist
 
 ### Before Launch:
-- [ ] Update all "LaunchScan" references to "SiteProof"
+- [ ] Update all "VibeSiteScan" references to "VibeSiteScan"
 - [ ] Test AI fix prompt generation
 - [ ] Verify decision logic accuracy
 - [ ] Test with real AI-built sites (Cursor/Lovable/Bolt)
@@ -418,7 +418,7 @@ export const SITEPROOF_COPY = {
 ## 📖 Documentation Needs
 
 ### User-Facing:
-1. **How SiteProof Works**
+1. **How VibeSiteScan Works**
    - What we check
    - Why it matters
    - How to use AI fix prompts
@@ -430,10 +430,10 @@ export const SITEPROOF_COPY = {
    - How to fix duplicate metadata
 
 3. **Builder-Specific Guides**
-   - Using SiteProof with Cursor
-   - Using SiteProof with Lovable
-   - Using SiteProof with Bolt
-   - Using SiteProof with Replit
+   - Using VibeSiteScan with Cursor
+   - Using VibeSiteScan with Lovable
+   - Using VibeSiteScan with Bolt
+   - Using VibeSiteScan with Replit
 
 ### Internal:
 1. Decision logic documentation
@@ -446,7 +446,7 @@ export const SITEPROOF_COPY = {
 ## 🎯 Success Metrics
 
 ### Product-Market Fit Signals:
-- "Did you SiteProof it?" becomes common phrase
+- "Did you VibeSiteScan it?" becomes common phrase
 - High rescan rate (users fixing and rechecking)
 - AI fix prompt copy rate >60%
 - Decision accuracy validated by users

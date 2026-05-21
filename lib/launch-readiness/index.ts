@@ -1,7 +1,7 @@
 /**
  * Launch Readiness System
  * 
- * LaunchScan measures public launch hygiene for fast-shipped websites.
+ * VibeSiteScan measures public launch hygiene for fast-shipped websites.
  * It is NOT an SEO ranking, brand quality score, performance score, or enterprise website benchmark.
  */
 

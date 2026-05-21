@@ -266,7 +266,7 @@ export function generateAIFixPrompt(
   const blockers = actions.filter(a => a.severity === 'blocker');
   const needsFix = actions.filter(a => a.severity === 'needs-fix');
 
-  let prompt = `You are working on my website at ${siteUrl}. DO NOT redesign the UI or change the visual styling. Fix ONLY the launch readiness issues found by LaunchScan.\n\n`;
+  let prompt = `You are working on my website at ${siteUrl}. DO NOT redesign the UI or change the visual styling. Fix ONLY the launch readiness issues found by VibeSiteScan.\n\n`;
   
   prompt += `Launch Status: ${launchDecision}\n\n`;
 

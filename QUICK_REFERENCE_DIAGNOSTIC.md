@@ -176,7 +176,7 @@ Better user experience ✅
 **If user asks**: "Why didn't my scan get a score?"
 
 **Response**:
-> You scanned [DOMAIN] which appears to be a large enterprise website. LaunchScan is designed for AI-built sites, MVPs, landing pages, and portfolios — not full enterprise websites.
+> You scanned [DOMAIN] which appears to be a large enterprise website. VibeSiteScan is designed for AI-built sites, MVPs, landing pages, and portfolios — not full enterprise websites.
 > 
 > Large enterprise sites have complex infrastructure that makes simple launch-readiness scoring misleading. We ran a diagnostic check and showed what we could verify, but we're not assigning a readiness decision.
 > 

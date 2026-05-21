@@ -2,7 +2,7 @@
 
 ## ✅ What Was Done
 
-Created an epic DevReceipt-inspired hero section for LaunchScan's homepage (`app/page.tsx`).
+Created an epic DevReceipt-inspired hero section for VibeSiteScan's homepage (`app/page.tsx`).
 
 ## 🎨 New Hero Design
 
@@ -79,7 +79,7 @@ Created an epic DevReceipt-inspired hero section for LaunchScan's homepage (`app
 ## 🚀 User Experience
 
 1. **Land on homepage** → Immediately see dark ops console
-2. **Observe live activity** → Feeds show LaunchScan in action
+2. **Observe live activity** → Feeds show VibeSiteScan in action
 3. **Read hero message** → Clear value prop
 4. **Click "Run Free Scan"** → Goes to `/dashboard/new-scan-pipeline`
 5. **Or "View Sample"** → Goes to `/r/sample`
@@ -188,7 +188,7 @@ All feeds use realistic demo data:
 - Classified stamp
 - Signal dots
 
-**Adapted For LaunchScan**:
+**Adapted For VibeSiteScan**:
 - Launch/scan messaging instead of dev analysis
 - Emerald accents instead of blood red
 - Launch readiness scores instead of "cooked" scores
@@ -210,6 +210,6 @@ The hero should:
 
 **Status**: ✅ COMPLETE AND PRODUCTION-READY
 
-The homepage now has an epic hero that matches the dual-theme system and creates a powerful first impression. The 3-column layout with live feeds makes LaunchScan feel active, trusted, and professional.
+The homepage now has an epic hero that matches the dual-theme system and creates a powerful first impression. The 3-column layout with live feeds makes VibeSiteScan feel active, trusted, and professional.
 
 **Go test it now!** 🚀

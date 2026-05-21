@@ -2,7 +2,7 @@
 const { runScan } = require('./lib/scanner/index.ts');
 
 async function testScan() {
-  console.log('🔍 Testing LaunchScan scanner engine...\n');
+  console.log('🔍 Testing VibeSiteScan scanner engine...\n');
   console.log('Target: https://vestintel.netlify.app/');
   console.log('Scan Depth: quick (homepage only)\n');
   console.log('⏳ Scanning...\n');

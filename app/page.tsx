@@ -6,40 +6,40 @@ import { useEffect, useState } from 'react';
 import { ScanInitializer } from "@/app/components/scan/ScanInitializer";
 
 const SCAN_LOGS = [
-  { t: "14:23:01", msg: "SCAN INITIATED — example.com", ok: true },
-  { t: "14:23:02", msg: "Target validated — 47 pages detected", ok: true },
+  { t: "14:23:01", msg: "SCAN INITIATED — my-saas.vercel.app", ok: true },
+  { t: "14:23:02", msg: "Target validated — 14 pages detected", ok: true },
   { t: "14:23:03", msg: "WARN: Missing OG image on homepage", ok: false },
-  { t: "14:23:04", msg: "Crawling /about /pricing /blog...", ok: true },
-  { t: "14:23:05", msg: "Critical: 404 on /contact-us", ok: false },
-  { t: "14:23:06", msg: "Launch Readiness: 72/100 — FIX REQUIRED", ok: false },
-  { t: "14:23:07", msg: "12 broken links detected", ok: false },
-  { t: "14:23:08", msg: "SEO check: PASS — metadata complete", ok: true },
-  { t: "14:23:09", msg: "Console errors: 3 warnings logged", ok: false },
-  { t: "14:23:10", msg: "Generating launch report...", ok: true },
-  { t: "14:23:11", msg: "SCAN COMPLETE — report ready", ok: true },
-  { t: "14:23:12", msg: "Decision: FIX BEFORE SHARING", ok: false },
+  { t: "14:23:04", msg: "Crawling /about /pricing /dashboard...", ok: true },
+  { t: "14:23:05", msg: "CRITICAL: /dashboard publicly reachable (no auth redirect)", ok: false },
+  { t: "14:23:06", msg: "AI Leftover: 'John Doe' found in testimonial", ok: false },
+  { t: "14:23:07", msg: "5 broken internal links detected", ok: false },
+  { t: "14:23:08", msg: "Share preview: INCOMPLETE — no og:image", ok: false },
+  { t: "14:23:09", msg: "Console errors: 2 JS errors on homepage", ok: false },
+  { t: "14:23:10", msg: "Form on /contact: no spam protection detected", ok: false },
+  { t: "14:23:11", msg: "Generating copy-paste fix prompts...", ok: true },
+  { t: "14:23:12", msg: "Decision: REVIEW BEFORE SHARING — 7 issues", ok: false },
 ];
 
 const RECENT_SCANS = [
-  { site: "startup-x.com", verdict: "SAFE TO SHARE — 94/100", ago: "3s" },
-  { site: "portfolio.dev", verdict: "FIX BEFORE SHARING — 72/100", ago: "18s" },
-  { site: "agency-site.io", verdict: "DO NOT SHIP — 45/100", ago: "41s" },
-  { site: "saas-app.com", verdict: "SAFE TO SHARE — 88/100", ago: "1m" },
-  { site: "blog.example", verdict: "FIX BEFORE SHARING — 67/100", ago: "2m" },
-  { site: "shop.store", verdict: "SAFE TO SHARE — 91/100", ago: "3m" },
-  { site: "docs.product", verdict: "FIX BEFORE SHARING — 78/100", ago: "4m" },
-  { site: "demo.tech", verdict: "DO NOT SHIP — 52/100", ago: "5m" },
+  { site: "my-portfolio.vercel.app", verdict: "READY TO SHARE — 0 blockers", ago: "3s" },
+  { site: "saas-mvp.netlify.app", verdict: "REVIEW BEFORE SHARING — 4 issues", ago: "18s" },
+  { site: "agency-preview.io", verdict: "DO NOT SHARE YET — /admin exposed", ago: "41s" },
+  { site: "landing.bolt.new", verdict: "READY TO SHARE — clean scan", ago: "1m" },
+  { site: "blog.cursor.so", verdict: "REVIEW BEFORE SHARING — 2 AI leftovers", ago: "2m" },
+  { site: "shop.lovable.dev", verdict: "READY TO SHARE — 91% coverage", ago: "3m" },
+  { site: "docs.replit.app", verdict: "REVIEW BEFORE SHARING — broken links", ago: "4m" },
+  { site: "demo.v0.dev", verdict: "DO NOT SHARE YET — secret in source", ago: "5m" },
 ];
 
 const TICKER = [
-  "47 SITES SCANNED TODAY",
-  "LAUNCH READINESS: INSTANT",
-  "BROKEN LINKS DETECTED: 127",
-  "MISSING OG IMAGES: 34",
-  "AVERAGE SCORE: 76/100",
-  "SITES SAVED FROM EMBARRASSMENT: 12",
-  "SCAN DEPTH: COMPREHENSIVE",
-  "LOCAL SCANS. ZERO SHAME.",
+  "FINAL QA FOR VIBE-CODED WEBSITES",
+  "PUBLIC EXPOSURE MAP: INSTANT",
+  "AI LEFTOVERS DETECTED: 127 TODAY",
+  "BROKEN LINKS FOUND: 342",
+  "EXPOSED KEYS FLAGGED: 8",
+  "COPY-PASTE FIX PROMPTS FOR CURSOR, LOVABLE, BOLT",
+  "DETERMINISTIC CHECKS — ZERO AI GUESSING",
+  "RULES-BASED ENGINE — CLEAR EVIDENCE",
 ];
 
 export default function HomePage() {
@@ -128,13 +128,13 @@ export default function HomePage() {
             <motion.div initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ delay: 0.9, duration: 0.5 }} className="w-full max-w-md border-t border-white/30 my-6" />
 
             <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.1 }} className="text-xl md:text-2xl text-white max-w-lg leading-relaxed mb-2">
-              Proof your site before your audience sees it.
+              Final QA for vibe-coded websites.
               <br />
-              <span className="text-white/60">Catch what AI can&apos;t see.</span>
+              <span className="text-white/60">See what the internet sees before you share it.</span>
             </motion.p>
 
             <motion.p initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.3 }} className="font-mono text-[10px] tracking-widest uppercase text-white/50 mb-10">
-              SEO · Links · Forms · Console · Meta · Mobile
+              Exposure Map · AI Leftovers · Broken Links · Forms · Exposed Keys · Fix Prompts
             </motion.p>
 
             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 1.5 }} className="flex flex-col sm:flex-row gap-3">
@@ -142,7 +142,7 @@ export default function HomePage() {
                 onClick={scrollToScanner}
                 className="px-8 py-3 bg-emerald-600 text-white font-mono text-xs tracking-widest uppercase hover:bg-emerald-500 transition-colors shadow-lg shadow-emerald-500/20"
               >
-                Proof My Site
+                Scan My Site
               </button>
               <Link href="/r/sample" className="px-8 py-3 border border-white/30 text-white/80 font-mono text-xs tracking-widest uppercase hover:border-white/50 hover:text-white transition-colors">
                 View Sample Report
@@ -150,11 +150,11 @@ export default function HomePage() {
             </motion.div>
 
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ delay: 1.8 }} className="mt-10 flex flex-wrap items-center justify-center gap-6 font-mono text-[10px] text-white/40 uppercase tracking-widest">
-              <span>Instant results</span>
+              <span>Rules-based checks</span>
               <span>◆</span>
-              <span>No signup</span>
+              <span>Clear evidence</span>
               <span>◆</span>
-              <span>100% Free</span>
+              <span>No AI guessing</span>
             </motion.div>
           </div>
 
@@ -177,10 +177,10 @@ export default function HomePage() {
               </div>
             </div>
             <div className="border-t border-white/20 pt-2">
-              <div className="font-mono text-[9px] text-white/50 uppercase tracking-widest mb-1">Top Issues</div>
+              <div className="font-mono text-[9px] text-white/50 uppercase tracking-widest mb-1">Top Issues Found</div>
               <div className="font-mono text-[10px] text-white/70">#1 — Missing OG images (34)</div>
-              <div className="font-mono text-[10px] text-white/60">#2 — Broken links (127)</div>
-              <div className="font-mono text-[10px] text-white/50">#3 — Console errors (89)</div>
+              <div className="font-mono text-[10px] text-white/60">#2 — AI leftovers in content (27)</div>
+              <div className="font-mono text-[10px] text-white/50">#3 — Broken internal links (19)</div>
             </div>
           </div>
         </div>

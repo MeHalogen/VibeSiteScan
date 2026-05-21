@@ -307,7 +307,7 @@ From backend/scoring system:
 ✅ 5. Coverage and confidence shown clearly
 ✅ 6. Product explains what it checks and doesn't check
 ✅ 7. Users understand this doesn't mean site is bad
-✅ 8. Product name consistent (LaunchScan)
+✅ 8. Product name consistent (VibeSiteScan)
 ✅ 9. Red not used for non-error diagnostic states
 ✅ 10. Clear CTA to scan better-fit site
 ✅ 11. Normal reports still show readiness decisions
@@ -478,7 +478,7 @@ The implementation is:
 - ✅ Actionable
 - ✅ Backward compatible
 
-Users now understand that LaunchScan is designed for AI-built sites, MVPs, landing pages, and portfolios — and when they scan something outside that scope, the product is honest about it.
+Users now understand that VibeSiteScan is designed for AI-built sites, MVPs, landing pages, and portfolios — and when they scan something outside that scope, the product is honest about it.
 
 **This protects and enhances product credibility.**
 

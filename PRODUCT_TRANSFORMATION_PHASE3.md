@@ -64,7 +64,7 @@ const handleCopyAIPrompt = () => {
 **Why It Matters:**
 - Target audience (vibe coders) can paste prompt into Cursor/Lovable/Bolt
 - Removes duplicate issue spam (7 "missing_og_image" → 1 "Add social share images")
-- Makes LaunchScan actionable, not just diagnostic
+- Makes VibeSiteScan actionable, not just diagnostic
 
 ---
 
@@ -265,7 +265,7 @@ const handleCopyAIPrompt = () => {
 - ✅ Responsive design works on mobile
 
 **Product Positioning:**
-- ✅ "LaunchScan is NOT a generic scanner" - clear in Summary tab
+- ✅ "VibeSiteScan is NOT a generic scanner" - clear in Summary tab
 - ✅ "Final QA for AI-built websites" - emphasized throughout
 - ✅ Target audience (vibe coders) served by AI prompt feature
 - ✅ Premium feel (not toy scanner)
