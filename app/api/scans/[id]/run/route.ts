@@ -69,11 +69,11 @@ export async function POST(
     // Save links
     const linksToInsert = result.linkResults.map(link => ({
       scan_id: scanId,
-      source_url: link.source || '',
-      target_url: link.url,
+      source_url: link.sourceUrl || '',
+      target_url: link.targetUrl,
       status_code: link.status,
       is_broken: !link.ok,
-      is_redirect: link.redirected,
+      is_redirect: link.isRedirect,
       error_message: link.error || null
     }));
     
