@@ -113,16 +113,32 @@ export default function HomePage() {
               <span className="classified-stamp text-[9px] text-white/50">PRE-LAUNCH INTELLIGENCE</span>
             </motion.div>
 
+            <style>{`
+              @keyframes flowingRed {
+                0%   { background-position: 0% 50%; }
+                50%  { background-position: 100% 50%; }
+                100% { background-position: 0% 50%; }
+              }
+              .vibe-gradient {
+                background: linear-gradient(90deg, #6b0000, #b91c1c, #ef4444, #fca5a5, #b91c1c, #6b0000);
+                background-size: 300% 300%;
+                animation: flowingRed 3s ease infinite;
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                background-clip: text;
+              }
+            `}</style>
             <motion.h1
               initial={{ opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.5, duration: 0.7 }}
-              className="font-bold leading-none text-white"
+              className="font-bold leading-none"
               style={{ fontSize: "clamp(3.5rem, 14vw, 10rem)" }}
             >
-              SITE
+              <span className="vibe-gradient">VIBE</span>
+              <span className="text-white">SITE</span>
               <br />
-              <span className="text-emerald-400 font-mono tracking-tighter">PROOF</span>
+              <span className="text-emerald-400 font-mono tracking-tighter">SCAN</span>
             </motion.h1>
 
             <motion.div initial={{ scaleX: 0 }} animate={{ scaleX: 1 }} transition={{ delay: 0.9, duration: 0.5 }} className="w-full max-w-md border-t border-white/30 my-6" />
