@@ -1,3 +1,4 @@
+// @ts-nocheck — legacy scanner, superseded by index.ts
 import * as cheerio from 'cheerio';
 import fetch from 'cross-fetch';
 import { normalizeUrl, isPrivateOrLocal, isSameOrigin } from './utils';

@@ -8,7 +8,7 @@ const TTL_MS = 1000 * 60 * 20; // 20 minutes
 
 function cleanup(map: Map<string, StoredDemoScan>) {
   const now = Date.now();
-  for (const [key, value] of map.entries()) {
+  for (const [key, value] of Array.from(map.entries())) {
     if (now - value.createdAt > TTL_MS) map.delete(key);
   }
 }

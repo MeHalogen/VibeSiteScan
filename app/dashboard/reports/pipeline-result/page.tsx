@@ -22,7 +22,7 @@ export default function PipelineResultPage() {
     async function load() {
       try {
         setLoading(true);
-        const res = await fetch(`/api/demo-scan/result/${encodeURIComponent(scanId)}`);
+        const res = await fetch(`/api/demo-scan/result/${encodeURIComponent(scanId!)}`);
         if (!res.ok) throw new Error("Report not found");
         const data = await res.json();
         if (!data.success) throw new Error(data.error || "Report not found");
