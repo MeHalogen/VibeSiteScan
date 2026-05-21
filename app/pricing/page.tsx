@@ -10,7 +10,7 @@ export default function PricingPage() {
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-lg">L</span>
             </div>
-            <span className="text-xl font-bold">LaunchScan</span>
+            <span className="text-xl font-bold">VibeSiteScan</span>
           </Link>
           <Link href="/dashboard" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
             Dashboard
@@ -46,7 +46,7 @@ export default function PricingPage() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-green-500 mt-1">✓</span>
-                <span>LaunchScan branding</span>
+                <span>VibeSiteScan branding</span>
               </li>
             </ul>
             <Link

@@ -1,7 +1,7 @@
 /**
  * Target Fit Detection
  * 
- * Determines whether the scanned website is an ideal fit for LaunchScan's
+ * Determines whether the scanned website is an ideal fit for VibeSiteScan's
  * launch hygiene scoring model.
  */
 
@@ -59,10 +59,10 @@ export function detectTargetFit(scanResult: any): TargetFitDetection {
   // Limited fit signals
   if (signals.isEnterpriseDomain) {
     targetFit = 'limited';
-    reason = 'Large enterprise website detected. LaunchScan is optimized for AI-built sites, MVPs, landing pages, and portfolios.';
+    reason = 'Large enterprise website detected. VibeSiteScan is optimized for AI-built sites, MVPs, landing pages, and portfolios.';
   } else if (signals.hasBotProtection) {
     targetFit = 'limited';
-    reason = 'Bot protection or access restrictions detected. LaunchScan could not reliably capture all checks.';
+    reason = 'Bot protection or access restrictions detected. VibeSiteScan could not reliably capture all checks.';
   } else if (signals.hasHighBlockageRate) {
     targetFit = 'limited';
     reason = 'Many requests were blocked or failed. This reduces scan reliability.';
@@ -73,15 +73,15 @@ export function detectTargetFit(scanResult: any): TargetFitDetection {
   // Ideal fit signals
   else if (isAIBuiltSignal(scanResult.target_url)) {
     targetFit = 'ideal';
-    reason = 'AI-built or fast-deployed site. Perfect fit for LaunchScan launch hygiene checks.';
+    reason = 'AI-built or fast-deployed site. Perfect fit for VibeSiteScan launch hygiene checks.';
   } else if (signals.pageCount <= 25 && !signals.hasHighBlockageRate) {
     targetFit = 'ideal';
-    reason = 'Small public website. Good fit for LaunchScan launch hygiene checks.';
+    reason = 'Small public website. Good fit for VibeSiteScan launch hygiene checks.';
   }
   // Acceptable fit
   else {
     targetFit = 'acceptable';
-    reason = 'Normal business website. LaunchScan can verify most launch hygiene checks.';
+    reason = 'Normal business website. VibeSiteScan can verify most launch hygiene checks.';
   }
 
   return {

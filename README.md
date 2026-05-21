@@ -1,6 +1,6 @@
-# LaunchScan
+# VibeSiteScan
 
-**LaunchScan** is a one-click pre-launch website QA scanner for freelancers, web agencies, SEO teams, and startup founders. Scan any website for broken links, SEO issues, forms, and mobile readiness before your clients or customers find the problems.
+**VibeSiteScan** is a one-click pre-launch website QA scanner for freelancers, web agencies, SEO teams, and startup founders. Scan any website for broken links, SEO issues, forms, and mobile readiness before your clients or customers find the problems.
 
 ## 🌟 Features
 

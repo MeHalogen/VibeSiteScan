@@ -1,8 +1,8 @@
-# 🚀 LaunchScan Pipeline UI - Implementation Complete
+# 🚀 VibeSiteScan Pipeline UI - Implementation Complete
 
 ## ✅ What Was Built
 
-A **complete UI/UX refactor** transforming LaunchScan from a static form into a **next-generation pipeline-based forensic scanner** with:
+A **complete UI/UX refactor** transforming VibeSiteScan from a static form into a **next-generation pipeline-based forensic scanner** with:
 
 ### Core Features Delivered
 

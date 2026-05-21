@@ -83,7 +83,7 @@ export default function ScanReportPage({ params }: { params: Promise<{ id: strin
       const doc = new jsPDF();
       
       doc.setFontSize(16);
-      doc.text('LaunchScan Report', 10, 10);
+      doc.text('VibeSiteScan Report', 10, 10);
       
       doc.setFontSize(12);
       doc.text(`Website: ${scan?.target_url}`, 10, 20);
@@ -110,7 +110,7 @@ export default function ScanReportPage({ params }: { params: Promise<{ id: strin
         }
       });
       
-      doc.save(`launchscan-report-${resolvedParams.id}.pdf`);
+      doc.save(`vibesitescan-report-${resolvedParams.id}.pdf`);
     } catch (error) {
       alert('Failed to generate PDF');
     }
@@ -140,7 +140,7 @@ export default function ScanReportPage({ params }: { params: Promise<{ id: strin
             <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
               <span className="text-white font-bold text-lg">L</span>
             </div>
-            <span className="text-xl font-bold">LaunchScan</span>
+            <span className="text-xl font-bold">VibeSiteScan</span>
           </Link>
           <div className="flex items-center gap-2">
             <button

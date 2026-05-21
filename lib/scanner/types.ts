@@ -155,13 +155,21 @@ export interface ScanResult {
   linkResults: LinkCheck[];
   issues: Issue[];
   score: number; // Legacy score for backwards compatibility
-  launchReadiness?: LaunchReadinessScore; // NEW: Launch readiness scoring
+  launchReadiness?: LaunchReadinessScore; // Launch readiness scoring
   durationMs: number;
   consoleEvents: ConsoleEvent[];
   formChecks: FormCheck[];
   robotsData?: RobotsData;
   sitemapData?: SitemapData;
   browserChecks?: BrowserChecksData;
+  // NEW: Engine outputs
+  publicRoutes?: any[];          // PublicRoute[]
+  exposureFindings?: any[];      // ExposureFinding[]
+  aiLeftoverFindings?: any[];    // AILeftoverFinding[]
+  keyPatternFindings?: any[];    // KeyPatternFinding[]
+  enhancedForms?: any[];         // DetectedForm[]
+  formFindings?: any[];          // FormFinding[]
+  fixPrompts?: any[];            // FixPrompt[]
   // Summary stats
   discoveredPagesCount: number;
   skippedPagesCount: number;

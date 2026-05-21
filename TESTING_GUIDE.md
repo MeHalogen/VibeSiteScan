@@ -4,7 +4,7 @@
 
 ### 1. Start Development Server
 ```bash
-cd /Users/mehalsrivastava/GitHub/LaunchScan
+cd /Users/mehalsrivastava/GitHub/VibeSiteScan
 npm run dev
 ```
 
@@ -80,7 +80,7 @@ Should navigate to: /dashboard/reports/pipeline-result?scanId=...
 - ✅ Dark console theme continues
 - ✅ Top header: dark panel with border
 - ✅ "LAUNCH REPORT" classified stamp
-- ✅ LaunchScan logo with emerald accent
+- ✅ VibeSiteScan logo with emerald accent
 - ✅ Target URL and metadata in cream text
 - ✅ Score badge in telemetry cell (dark with border)
 - ✅ Tab navigation (emerald-400 for active)

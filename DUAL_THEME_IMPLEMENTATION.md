@@ -1,7 +1,7 @@
 # Dual-Theme System Implementation Summary
 
 ## Overview
-Successfully integrated the Dev Receipt CSS dual-theme system into LaunchScan with:
+Successfully integrated the Dev Receipt CSS dual-theme system into VibeSiteScan with:
 - **Launch Gate** (cream/paper theme) for config pages
 - **Launch Console** (graphite/dark ops theme) for scan pipeline and reports
 

@@ -51,7 +51,7 @@ interface ReportPageProps {
   result: ScanResult;
 }
 
-type TabType = 'overview' | 'crawl-map' | 'pages' | 'links' | 'issues' | 'seo' | 'social' | 'forms' | 'console' | 'passed' | 'fix-plan' | 'coverage';
+type TabType = 'overview' | 'crawl-map' | 'pages' | 'links' | 'issues' | 'seo' | 'social' | 'forms' | 'console' | 'passed' | 'fix-plan' | 'coverage' | 'exposure' | 'ai-leftovers' | 'keys' | 'fix-prompts';
 
 export default function TerminalReportPage({ scan, result }: ReportPageProps) {
   const [activeTab, setActiveTab] = useState<TabType>('overview');
@@ -66,6 +66,15 @@ export default function TerminalReportPage({ scan, result }: ReportPageProps) {
   const resultData = result as any;
   const pagesData = resultData?.pages || scanData?.pages || [];
   const issuesData = resultData?.issues || scanData?.issues || [];
+
+  // New engine data
+  const publicRoutes = resultData?.publicRoutes || scanData?.publicRoutes || [];
+  const exposureFindings = resultData?.exposureFindings || scanData?.exposureFindings || [];
+  const aiLeftoverFindings = resultData?.aiLeftoverFindings || scanData?.aiLeftoverFindings || [];
+  const keyPatternFindings = resultData?.keyPatternFindings || scanData?.keyPatternFindings || [];
+  const enhancedForms = resultData?.enhancedForms || scanData?.enhancedForms || [];
+  const formFindings = resultData?.formFindings || scanData?.formFindings || [];
+  const fixPromptsData = resultData?.fixPrompts || scanData?.fixPrompts || [];
 
   // Use actual linkResults from scanner (fallback only if truly empty)
   const allLinkResults = useMemo(() => {
@@ -110,8 +119,12 @@ export default function TerminalReportPage({ scan, result }: ReportPageProps) {
   const tabs: { id: TabType; label: string; count?: number; icon: string }[] = [
     { id: 'overview', label: 'Summary', icon: '█' },
     { id: 'fix-plan', label: 'Fix Before Shipping', count: issuesData.filter((i: any) => i.severity === 'critical' || i.severity === 'warning').length, icon: '⚠' },
-    { id: 'crawl-map', label: 'Routes', count: scan.pages_count, icon: '◉' },
-    { id: 'links', label: 'Links', count: allLinkResults.length, icon: '⚡' },
+    { id: 'exposure', label: 'Exposure Map', count: exposureFindings.length, icon: '◉' },
+    { id: 'ai-leftovers', label: 'AI Leftovers', count: aiLeftoverFindings.length, icon: '⚡' },
+    { id: 'keys', label: 'Exposed Keys', count: keyPatternFindings.length, icon: '⚿' },
+    { id: 'fix-prompts', label: 'Fix Prompts', count: fixPromptsData.filter((f: any) => f.tool === 'generic').length, icon: '⌨' },
+    { id: 'crawl-map', label: 'Routes', count: scan.pages_count, icon: '◈' },
+    { id: 'links', label: 'Links', count: allLinkResults.length, icon: '→' },
     { id: 'seo', label: 'Metadata', icon: '◈' },
     { id: 'social', label: 'Share Preview', icon: '♦' },
     { id: 'forms', label: 'Forms', count: scan.forms_found_count || 0, icon: '▤' },
@@ -163,11 +176,11 @@ export default function TerminalReportPage({ scan, result }: ReportPageProps) {
           <div className="flex items-center justify-between mb-4">
             <Link href="/dashboard/new-scan-pipeline" className="flex items-center gap-3 group">
               <div className="w-10 h-10 bg-emerald-600 rounded flex items-center justify-center">
-                <span className="text-white font-bold text-xl font-mono">L</span>
+                <span className="text-white font-bold text-xl font-mono">V</span>
               </div>
               <div>
-                <div className="text-lg font-bold text-primary font-mono tracking-wide">LAUNCHSCAN</div>
-                <div className="text-[9px] text-tertiary font-mono tracking-widest uppercase">Intelligence System</div>
+                <div className="text-lg font-bold text-primary font-mono tracking-wide">VIBESITESCAN</div>
+                <div className="text-[9px] text-tertiary font-mono tracking-widest uppercase">Launch QA Engine</div>
               </div>
             </Link>
             <div className="flex items-center gap-3">
@@ -255,7 +268,11 @@ export default function TerminalReportPage({ scan, result }: ReportPageProps) {
         {activeTab === 'console' && <ConsoleTab browserChecks={resultData?.browserChecks} consoleEvents={resultData?.consoleEvents || []} />}
         {activeTab === 'passed' && <PassedTab scan={scan} result={result} />}
         {activeTab === 'fix-plan' && <FixPlanTab issues={issuesData} grouped={groupedIssues} />}
-        {activeTab === 'coverage' && <CoverageTab scan={scan} />}
+        {activeTab === 'coverage' && <CoverageTab scan={scan} result={result} />}
+        {activeTab === 'exposure' && <ExposureMapTab publicRoutes={publicRoutes} findings={exposureFindings} />}
+        {activeTab === 'ai-leftovers' && <AILeftoversTab findings={aiLeftoverFindings} />}
+        {activeTab === 'keys' && <KeyPatternsTab findings={keyPatternFindings} />}
+        {activeTab === 'fix-prompts' && <FixPromptsTab fixPrompts={fixPromptsData} allFindings={[...exposureFindings, ...aiLeftoverFindings, ...keyPatternFindings, ...formFindings]} />}
       </main>
 
       {/* Issue Detail Modal */}
@@ -301,11 +318,13 @@ function OverviewTab({ scan, result, scoreColor }: any) {
       </div>
 
       {/* Quick Stats Grid */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4">
         <MetricCard label="Routes Checked" value={scan.pages_count} alert={false} />
         <MetricCard label="Blockers" value={scan.critical_issues_count} alert={scan.critical_issues_count > 0} />
-        <MetricCard label="Needs Fix" value={scan.warning_issues_count} alert={scan.warning_issues_count > 5} />
+        <MetricCard label="Risky Routes" value={resultData?.exposureFindings?.length || 0} alert={(resultData?.exposureFindings?.length || 0) > 0} />
+        <MetricCard label="AI Leftovers" value={resultData?.aiLeftoverFindings?.length || 0} alert={(resultData?.aiLeftoverFindings?.length || 0) > 0} />
         <MetricCard label="Broken Links" value={scan.broken_internal_links_count} alert={scan.broken_internal_links_count > 0} />
+        <MetricCard label="Key Patterns" value={resultData?.keyPatternFindings?.length || 0} alert={(resultData?.keyPatternFindings?.length || 0) > 0} />
       </div>
 
       {/* What We Checked */}
@@ -350,6 +369,33 @@ function OverviewTab({ scan, result, scoreColor }: any) {
               <div className="text-xs text-tertiary font-mono">{scan.console_errors_count} console error(s) found</div>
             </div>
           </div>
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 flex-shrink-0 font-mono text-xs">
+              🗺️
+            </div>
+            <div>
+              <div className="font-mono font-medium text-primary text-sm">Exposure Map</div>
+              <div className="text-xs text-tertiary font-mono">{resultData?.exposureFindings?.length || 0} risky route(s) flagged</div>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 flex-shrink-0 font-mono text-xs">
+              🤖
+            </div>
+            <div>
+              <div className="font-mono font-medium text-primary text-sm">AI Leftovers</div>
+              <div className="text-xs text-tertiary font-mono">{resultData?.aiLeftoverFindings?.length || 0} placeholder(s) detected</div>
+            </div>
+          </div>
+          <div className="flex items-start gap-3">
+            <div className="w-8 h-8 rounded bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 flex-shrink-0 font-mono text-xs">
+              🔑
+            </div>
+            <div>
+              <div className="font-mono font-medium text-primary text-sm">Key Patterns</div>
+              <div className="text-xs text-tertiary font-mono">{resultData?.keyPatternFindings?.length || 0} pattern(s) found in source</div>
+            </div>
+          </div>
         </div>
       </div>
 
@@ -387,8 +433,8 @@ function OverviewTab({ scan, result, scoreColor }: any) {
         <div className="intel-panel-dark border-amber-500/20 rounded-xl p-6">
           <h3 className="text-sm font-mono font-semibold text-amber-400 mb-3 uppercase tracking-wider">Next steps</h3>
           <p className="text-secondary mb-4 font-mono text-sm">
-            Switch to the <span className="font-semibold text-amber-400">"FIX BEFORE SHIPPING"</span> tab to see grouped action items 
-            and copy the AI fix prompt for Cursor, Lovable, or Bolt.
+            Switch to the <span className="font-semibold text-amber-400">"FIX BEFORE SHIPPING"</span> tab to see grouped action items, 
+            or use the <span className="font-semibold text-emerald-400">"FIX PROMPTS"</span> tab to copy ready-made prompts for Cursor, Lovable, or Bolt.
           </p>
           <div className="text-xs text-tertiary font-mono">
             ◆ We've grouped {issuesData.length} issue(s) into actionable fixes
@@ -1337,287 +1383,170 @@ function FixPlanTab({ issues, grouped }: any) {
 }
 
 // COVERAGE TAB
-function CoverageTab({ scan }: any) {
+function CoverageTab({ scan, result }: any) {
+  const resultData = result as any;
+  const browserChecks = resultData?.browserChecks;
+  const browserStatus = browserChecks?.browserChecksStatus || 'skipped';
+  const consoleErrors = browserChecks?.consoleErrors || [];
+  const consoleWarnings = browserChecks?.consoleWarnings || [];
+  const networkFailures = browserChecks?.failedNetworkRequests || [];
+
+  const engines = [
+    { label: 'HTTP Fetch + Crawl', done: true, detail: `${scan.pages_count} page(s) scanned` },
+    { label: 'SEO Metadata', done: true, detail: 'Titles, descriptions, headings' },
+    { label: 'Link Validation', done: true, detail: `${resultData?.linkResults?.length || 0} link(s) checked` },
+    { label: 'Share Preview (OG/Twitter)', done: true, detail: 'Open Graph + Twitter Cards' },
+    { label: 'Forms Analysis', done: true, detail: `${scan.forms_found_count || 0} form(s) detected` },
+    { label: 'robots.txt + sitemap.xml', done: true, detail: 'Crawler directives' },
+    { label: 'Browser Console (Playwright)', done: browserStatus === 'completed', detail: browserStatus === 'completed' ? `${consoleErrors.length} error(s), ${consoleWarnings.length} warning(s)` : 'Did not run' },
+    { label: 'Network Failures (Playwright)', done: browserStatus === 'completed', detail: browserStatus === 'completed' ? `${networkFailures.length} failed request(s)` : 'Did not run' },
+    { label: 'Public Exposure Map', done: true, detail: `${resultData?.exposureFindings?.length || 0} risky route(s)` },
+    { label: 'AI Leftover Detector', done: true, detail: `${resultData?.aiLeftoverFindings?.length || 0} placeholder(s)` },
+    { label: 'Key/Secret Pattern Scan', done: true, detail: `${resultData?.keyPatternFindings?.length || 0} pattern(s) found` },
+    { label: 'Enhanced Form Rules', done: true, detail: 'Spam protection + success state' },
+  ];
+
   return (
-    <div className="space-y-4">
-      <div className="bg-[#151b2b] border border-[#1e293b] rounded-lg p-6">
-        <h2 className="text-sm font-bold text-cyan-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-          <span>◎</span> SCAN_COVERAGE
+    <div className="space-y-6">
+
+      {/* Engine Status Grid */}
+      <div className="intel-panel-dark rounded-xl p-6">
+        <h2 className="text-xs font-mono font-semibold text-emerald-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+          <span>◎</span> Engine Status
         </h2>
-        <div className="space-y-4">
-          <div>
-            <div className="text-xs text-slate-500 uppercase mb-2">SCAN_DEPTH</div>
-            <div className="text-lg font-semibold text-slate-300">
-              {scan.scan_depth === 'quick' ? 'QUICK_SCAN (Homepage Only)' : 'STANDARD_SCAN (Up to 25 Pages)'}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+          {engines.map((eng) => (
+            <div key={eng.label} className="flex items-start gap-3 py-2 border-b border-white/5 last:border-0">
+              <span className={`mt-0.5 text-sm font-mono ${eng.done ? 'text-emerald-400' : 'text-slate-500'}`}>
+                {eng.done ? '✓' : '○'}
+              </span>
+              <div>
+                <div className={`text-sm font-mono ${eng.done ? 'text-primary' : 'text-tertiary'}`}>{eng.label}</div>
+                <div className="text-xs text-tertiary font-mono mt-0.5">{eng.detail}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* Browser Check Results */}
+      {browserStatus === 'completed' && (
+        <div className="intel-panel-dark rounded-xl p-6">
+          <h2 className="text-xs font-mono font-semibold text-emerald-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+            <span>🖥</span> Browser Check Results
+            <span className="ml-2 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded font-mono">Playwright</span>
+          </h2>
+          <div className="grid grid-cols-3 gap-4 mb-6">
+            <div className="telemetry-cell p-4">
+              <div className="text-xs text-tertiary font-mono uppercase tracking-widest mb-1">Console Errors</div>
+              <div className={`text-3xl font-bold font-mono ${consoleErrors.length > 0 ? 'text-red-400' : 'text-emerald-400'}`}>{consoleErrors.length}</div>
+            </div>
+            <div className="telemetry-cell p-4">
+              <div className="text-xs text-tertiary font-mono uppercase tracking-widest mb-1">Console Warnings</div>
+              <div className={`text-3xl font-bold font-mono ${consoleWarnings.length > 0 ? 'text-amber-400' : 'text-emerald-400'}`}>{consoleWarnings.length}</div>
+            </div>
+            <div className="telemetry-cell p-4">
+              <div className="text-xs text-tertiary font-mono uppercase tracking-widest mb-1">Network Failures</div>
+              <div className={`text-3xl font-bold font-mono ${networkFailures.length > 0 ? 'text-red-400' : 'text-emerald-400'}`}>{networkFailures.length}</div>
             </div>
           </div>
+
+          {consoleErrors.length > 0 && (
+            <div className="mb-4">
+              <div className="text-xs font-mono text-red-400 uppercase tracking-wider mb-2">Console Errors</div>
+              <div className="space-y-2">
+                {consoleErrors.slice(0, 10).map((err: any, i: number) => (
+                  <div key={i} className="bg-red-500/5 border border-red-500/20 rounded p-3 font-mono text-xs text-red-300 break-all">
+                    {err.message}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {networkFailures.length > 0 && (
+            <div>
+              <div className="text-xs font-mono text-amber-400 uppercase tracking-wider mb-2">Failed Network Requests</div>
+              <div className="space-y-2">
+                {networkFailures.slice(0, 10).map((req: any, i: number) => (
+                  <div key={i} className="bg-amber-500/5 border border-amber-500/20 rounded p-3 font-mono text-xs text-amber-300 break-all">
+                    <span className="text-tertiary">URL: </span>{req.url}
+                    {req.error && <><br /><span className="text-tertiary">Error: </span>{req.error}</>}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {consoleErrors.length === 0 && networkFailures.length === 0 && (
+            <div className="text-center py-4 text-emerald-400 font-mono text-sm">
+              ✓ No console errors or network failures detected
+            </div>
+          )}
+        </div>
+      )}
+
+      {browserStatus !== 'completed' && (
+        <div className="intel-panel-dark border-amber-500/20 rounded-xl p-6">
+          <h2 className="text-xs font-mono font-semibold text-amber-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+            <span>⚠</span> Browser Check Did Not Run
+          </h2>
+          <p className="text-secondary font-mono text-sm">
+            The Playwright browser check failed or was skipped for this scan. Console errors, network failures, and JS rendering data are unavailable.
+          </p>
+        </div>
+      )}
+
+      {/* Scan Stats */}
+      <div className="intel-panel-dark rounded-xl p-6">
+        <h2 className="text-xs font-mono font-semibold text-emerald-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+          <span>◆</span> Scan Stats
+        </h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
           <div>
-            <div className="text-xs text-slate-500 uppercase mb-2">PAGES_DISCOVERED</div>
-            <div className="text-lg font-semibold text-slate-300">{scan.discovered_pages_count}</div>
+            <div className="text-xs text-tertiary font-mono uppercase tracking-wider mb-1">Scan Depth</div>
+            <div className="text-sm font-semibold font-mono text-primary">{scan.scan_depth === 'quick' ? 'Quick (Homepage)' : 'Standard (25 pages)'}</div>
           </div>
           <div>
-            <div className="text-xs text-slate-500 uppercase mb-2">PAGES_SCANNED</div>
-            <div className="text-lg font-semibold text-slate-300">{scan.pages_count}</div>
+            <div className="text-xs text-tertiary font-mono uppercase tracking-wider mb-1">Discovered</div>
+            <div className="text-sm font-semibold font-mono text-primary">{scan.discovered_pages_count} pages</div>
+          </div>
+          <div>
+            <div className="text-xs text-tertiary font-mono uppercase tracking-wider mb-1">Scanned</div>
+            <div className="text-sm font-semibold font-mono text-primary">{scan.pages_count} pages</div>
           </div>
           {scan.skipped_pages_count > 0 && (
             <div>
-              <div className="text-xs text-slate-500 uppercase mb-2">PAGES_SKIPPED</div>
-              <div className="text-lg font-semibold text-yellow-400">{scan.skipped_pages_count}</div>
-              <div className="text-xs text-slate-500 mt-1">
-                (Exceeded scan depth limit)
-              </div>
+              <div className="text-xs text-tertiary font-mono uppercase tracking-wider mb-1">Skipped</div>
+              <div className="text-sm font-semibold font-mono text-amber-400">{scan.skipped_pages_count} pages</div>
             </div>
           )}
         </div>
       </div>
 
-      <div className="bg-[#151b2b] border border-[#1e293b] rounded-lg p-6">
-        <h2 className="text-sm font-bold text-cyan-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-          <span>◎</span> WHAT_WE_CHECKED
+      {/* Known Limitations */}
+      <div className="intel-panel-dark border-slate-600/30 rounded-xl p-6">
+        <h2 className="text-xs font-mono font-semibold text-slate-400 uppercase tracking-widest mb-4 flex items-center gap-2">
+          <span>○</span> Known Limitations
         </h2>
-        <ul className="space-y-2 text-sm text-slate-300">
-          <li className="flex items-start gap-2">
-            <span className="text-green-400">✓</span>
-            <span>HTTP status codes and page accessibility</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="text-green-400">✓</span>
-            <span>SEO metadata (titles, descriptions, headings)</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="text-green-400">✓</span>
-            <span>Internal and external link validation</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="text-green-400">✓</span>
-            <span>Social media tags (Open Graph, Twitter Cards)</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="text-green-400">✓</span>
-            <span>Form structure and accessibility</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="text-green-400">✓</span>
-            <span>robots.txt and sitemap.xml presence</span>
-          </li>
-          <li className="flex items-start gap-2">
-            <span className="text-green-400">✓</span>
-            <span>Mobile viewport configuration</span>
-          </li>
-        </ul>
-      </div>
-
-      <div className="bg-yellow-500/10 border border-yellow-500/30 rounded-lg p-6">
-        <h2 className="text-sm font-bold text-yellow-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-          <span>⚠</span> CURRENT_LIMITATIONS
-        </h2>
-        <div className="space-y-3 text-sm text-slate-300">
-          <div className="flex items-start gap-3">
-            <span className="text-yellow-400 mt-0.5">•</span>
-            <div>
-              <strong className="text-yellow-400">JavaScript-rendered content may not be fully analyzed</strong>
-              <p className="text-slate-400 text-xs mt-1">
-                React/Vue/Angular apps that render content client-side won't be captured by this static HTML scanner.
-              </p>
-            </div>
+        <div className="space-y-3 text-sm font-mono">
+          <div className="flex items-start gap-3 text-slate-400">
+            <span className="text-slate-500 mt-0.5">•</span>
+            <span><span className="text-slate-300">Pages behind login walls</span> cannot be scanned — authenticated scanning not yet supported.</span>
           </div>
-          <div className="flex items-start gap-3">
-            <span className="text-yellow-400 mt-0.5">•</span>
-            <div>
-              <strong className="text-yellow-400">Forms are detected but not submitted</strong>
-              <p className="text-slate-400 text-xs mt-1">
-                Manual testing recommended for contact forms, checkout flows, and user registration.
-              </p>
-            </div>
+          <div className="flex items-start gap-3 text-slate-400">
+            <span className="text-slate-500 mt-0.5">•</span>
+            <span><span className="text-slate-300">Forms are detected but not submitted</span> — manual testing recommended for checkout flows.</span>
           </div>
-          <div className="flex items-start gap-3">
-            <span className="text-yellow-400 mt-0.5">•</span>
-            <div>
-              <strong className="text-yellow-400">External links checked via HEAD request only</strong>
-              <p className="text-slate-400 text-xs mt-1">
-                Some servers block HEAD requests - manual verification may be needed for false positives.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <span className="text-yellow-400 mt-0.5">•</span>
-            <div>
-              <strong className="text-yellow-400">Pages behind authentication cannot be scanned</strong>
-              <p className="text-slate-400 text-xs mt-1">
-                Login walls, password-protected pages, and member areas require authenticated scanning.
-              </p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <span className="text-yellow-400 mt-0.5">•</span>
-            <div>
-              <strong className="text-yellow-400">Browser console checks require advanced scan mode</strong>
-              <p className="text-slate-400 text-xs mt-1">
-                JavaScript errors, network failures, and performance metrics need real browser execution.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-6">
-        <h2 className="text-sm font-bold text-blue-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-          <span>▶</span> ROADMAP_TO_ELIMINATE_LIMITATIONS
-        </h2>
-        <div className="space-y-4">
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-bold text-blue-400">Phase 1: Browser Automation</h3>
-              <span className="text-xs text-slate-500 uppercase bg-red-500/20 px-2 py-0.5 rounded">Priority: High</span>
-            </div>
-            <p className="text-sm text-slate-300 mb-2">
-              Integrate Puppeteer/Playwright to execute JavaScript and capture fully-rendered content
-            </p>
-            <ul className="space-y-1 text-xs text-slate-400 ml-4">
-              <li>• Capture console errors and warnings</li>
-              <li>• Analyze performance metrics (Core Web Vitals)</li>
-              <li>• Screenshot generation for visual regression</li>
-              <li>• Test single-page application (SPA) routing</li>
-            </ul>
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-bold text-blue-400">Phase 2: Authenticated Scanning</h3>
-              <span className="text-xs text-slate-500 uppercase bg-red-500/20 px-2 py-0.5 rounded">Priority: High</span>
-            </div>
-            <p className="text-sm text-slate-300 mb-2">
-              Support cookie injection and login flows to scan protected pages
-            </p>
-            <ul className="space-y-1 text-xs text-slate-400 ml-4">
-              <li>• Cookie-based authentication</li>
-              <li>• Username/password login automation</li>
-              <li>• OAuth token support</li>
-              <li>• Session persistence across pages</li>
-            </ul>
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-bold text-blue-400">Phase 3: Form Testing Automation</h3>
-              <span className="text-xs text-slate-500 uppercase bg-yellow-500/20 px-2 py-0.5 rounded">Priority: Medium</span>
-            </div>
-            <p className="text-sm text-slate-300 mb-2">
-              Automated form submission with test data and validation checks
-            </p>
-            <ul className="space-y-1 text-xs text-slate-400 ml-4">
-              <li>• Auto-fill forms with test data</li>
-              <li>• Validate error messages</li>
-              <li>• Test CAPTCHA detection</li>
-              <li>• Check email delivery (for contact forms)</li>
-            </ul>
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-bold text-blue-400">Phase 4: External Link Deep Validation</h3>
-              <span className="text-xs text-slate-500 uppercase bg-yellow-500/20 px-2 py-0.5 rounded">Priority: Medium</span>
-            </div>
-            <p className="text-sm text-slate-300 mb-2">
-              Full GET requests with retry logic and intelligent fallbacks
-            </p>
-            <ul className="space-y-1 text-xs text-slate-400 ml-4">
-              <li>• Retry failed HEAD requests with GET</li>
-              <li>• User-agent rotation for blocked servers</li>
-              <li>• Detect soft 404s (200 status but error page)</li>
-              <li>• Track link rot over time</li>
-            </ul>
-          </div>
-
-          <div>
-            <div className="flex items-center justify-between mb-2">
-              <h3 className="text-sm font-bold text-blue-400">Phase 5: AI-Powered Analysis</h3>
-              <span className="text-xs text-slate-500 uppercase bg-blue-500/20 px-2 py-0.5 rounded">Priority: Low</span>
-            </div>
-            <p className="text-sm text-slate-300 mb-2">
-              Machine learning for content quality, UX issues, and conversion optimization
-            </p>
-            <ul className="space-y-1 text-xs text-slate-400 ml-4">
-              <li>• Readability scoring (Flesch-Kincaid)</li>
-              <li>• Sentiment analysis for messaging</li>
-              <li>• CTA button placement optimization</li>
-              <li>• Accessibility beyond WCAG basics</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      <div className="bg-green-500/10 border border-green-500/30 rounded-lg p-6">
-        <h2 className="text-sm font-bold text-green-400 uppercase tracking-wider mb-4 flex items-center gap-2">
-          <span>→</span> NEXT_STEPS_TO_IMPLEMENT
-        </h2>
-        <div className="space-y-3 text-sm text-slate-300">
-          <div className="flex items-start gap-3">
-            <span className="text-green-400 font-bold">1.</span>
-            <div className="w-full">
-              <strong className="text-green-400">Install Puppeteer</strong>
-              <pre className="bg-[#0a0e1a] border border-slate-700 rounded px-3 py-2 mt-2 text-xs text-cyan-400 font-mono overflow-x-auto">npm install puppeteer</pre>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <span className="text-green-400 font-bold">2.</span>
-            <div className="w-full">
-              <strong className="text-green-400">Create Browser Scanner Module</strong>
-              <pre className="bg-[#0a0e1a] border border-slate-700 rounded px-3 py-2 mt-2 text-xs text-cyan-400 font-mono overflow-x-auto break-all">{`// lib/scanner/browserScanner.ts
-import puppeteer from 'puppeteer';
-
-export async function scanWithBrowser(url: string) {
-  const browser = await puppeteer.launch({ headless: true });
-  const page = await browser.newPage();
-  
-  // Capture console logs
-  const consoleLogs: any[] = [];
-  page.on('console', msg => consoleLogs.push({
-    type: msg.type(),
-    text: msg.text()
-  }));
-  
-  await page.goto(url, { waitUntil: 'networkidle2' });
-  
-  // Get fully-rendered HTML
-  const html = await page.content();
-  
-  // Capture performance metrics
-  const metrics = await page.metrics();
-  
-  await browser.close();
-  
-  return { html, consoleLogs, metrics };
-}`}</pre>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <span className="text-green-400 font-bold">3.</span>
-            <div>
-              <strong className="text-green-400">Add Scan Mode Toggle</strong>
-              <p className="text-slate-400 text-xs mt-1">
-                Let users choose between "Quick Scan" (current) and "Deep Scan" (browser-based)
-              </p>
-            </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <span className="text-green-400 font-bold">4.</span>
-            <div className="w-full">
-              <strong className="text-green-400">Update Scanner Logic</strong>
-              <pre className="bg-[#0a0e1a] border border-slate-700 rounded px-3 py-2 mt-2 text-xs text-cyan-400 font-mono overflow-x-auto break-all">{`// In runScan():
-if (scanMode === 'deep') {
-  const browserData = await scanWithBrowser(url);
-  html = browserData.html; // Use rendered HTML
-  consoleEvents = browserData.consoleLogs;
-}`}</pre>
-            </div>
+          <div className="flex items-start gap-3 text-slate-400">
+            <span className="text-slate-500 mt-0.5">•</span>
+            <span><span className="text-slate-300">External links use HEAD requests</span> — some servers block HEAD, causing false positives.</span>
           </div>
         </div>
       </div>
     </div>
   );
 }
-
 // Helper Components
 function MetricCard({ label, value, alert }: any) {
   return (
@@ -1864,6 +1793,367 @@ function PageDetailModal({ page, onClose }: any) {
             </div>
           </div>
         </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── EXPOSURE MAP TAB ─────────────────────────────────────────────────────────
+function ExposureMapTab({ publicRoutes, findings }: { publicRoutes: any[]; findings: any[] }) {
+  const routesByType = publicRoutes.reduce((acc: Record<string, any[]>, r: any) => {
+    const t = r.routeType || 'unknown';
+    if (!acc[t]) acc[t] = [];
+    acc[t].push(r);
+    return acc;
+  }, {});
+
+  const riskColor = (level: string) =>
+    level === 'high' ? 'text-red-400 border-red-500/30 bg-red-500/5'
+    : level === 'medium' ? 'text-amber-400 border-amber-500/30 bg-amber-500/5'
+    : 'text-emerald-400 border-emerald-500/30 bg-emerald-500/5';
+
+  const statusColor = (status: string) =>
+    status === 'publicly_reachable' ? 'text-amber-400'
+    : status === 'redirects_to_login' ? 'text-emerald-400'
+    : status === 'blocked' ? 'text-emerald-400'
+    : status === 'not_found' ? 'text-slate-500'
+    : 'text-slate-400';
+
+  return (
+    <div className="space-y-6">
+      <div className="intel-panel-dark rounded-xl p-6">
+        <h2 className="text-sm font-mono font-semibold text-emerald-400 uppercase tracking-widest mb-1">
+          What the Internet Can See
+        </h2>
+        <p className="text-xs text-slate-400 font-mono mb-4">
+          Found {publicRoutes.filter((r: any) => r.publicStatus === 'publicly_reachable').length} publicly reachable routes.
+          {findings.length > 0 && ` ${findings.length} route(s) flagged for review.`}
+        </p>
+
+        {findings.length > 0 && (
+          <div className="space-y-3 mb-6">
+            <h3 className="text-xs font-mono text-amber-400 uppercase tracking-wider mb-2">⚠ Flagged Routes</h3>
+            {findings.map((f: any, i: number) => (
+              <div key={i} className={`border rounded-lg p-4 ${riskColor(f.severity === 'critical' ? 'high' : 'medium')}`}>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className={`text-xs font-mono font-bold uppercase ${f.severity === 'critical' ? 'text-red-400' : 'text-amber-400'}`}>
+                        {f.severity}
+                      </span>
+                      <span className="text-xs text-slate-500 font-mono">•</span>
+                      <span className="text-xs text-slate-300 font-mono">{f.ruleId}</span>
+                    </div>
+                    <div className="text-sm font-mono text-white mb-1">{f.title}</div>
+                    <div className="text-xs text-slate-400 font-mono mb-2">{f.description}</div>
+                    <div className="text-xs text-slate-500 font-mono">
+                      <span className="text-slate-400">Why it matters:</span> {f.whyItMatters}
+                    </div>
+                  </div>
+                  <div className="text-xs font-mono text-slate-400 shrink-0">{f.path}</div>
+                </div>
+                {f.fixSummary && (
+                  <div className="mt-3 pt-3 border-t border-white/10">
+                    <div className="text-xs text-slate-400 font-mono">
+                      <span className="text-emerald-400">Fix:</span> {f.fixSummary}
+                    </div>
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* All routes table */}
+        <h3 className="text-xs font-mono text-slate-400 uppercase tracking-wider mb-3">All Discovered Routes</h3>
+        <div className="overflow-x-auto">
+          <table className="w-full text-xs font-mono">
+            <thead>
+              <tr className="border-b border-white/10">
+                <th className="text-left text-slate-500 pb-2 pr-4">PATH</th>
+                <th className="text-left text-slate-500 pb-2 pr-4">TYPE</th>
+                <th className="text-left text-slate-500 pb-2 pr-4">STATUS</th>
+                <th className="text-left text-slate-500 pb-2 pr-4">HTTP</th>
+                <th className="text-left text-slate-500 pb-2">RISK</th>
+              </tr>
+            </thead>
+            <tbody>
+              {publicRoutes.map((r: any, i: number) => (
+                <tr key={i} className="border-b border-white/5 hover:bg-white/2">
+                  <td className="py-2 pr-4 text-slate-300 truncate max-w-xs">{r.path}</td>
+                  <td className="py-2 pr-4 text-slate-500">{r.routeType?.replace('_', ' ')}</td>
+                  <td className={`py-2 pr-4 ${statusColor(r.publicStatus)}`}>{r.publicStatus?.replace(/_/g, ' ')}</td>
+                  <td className={`py-2 pr-4 ${r.statusCode >= 400 ? 'text-red-400' : r.statusCode >= 300 ? 'text-amber-400' : 'text-emerald-400'}`}>{r.statusCode}</td>
+                  <td className={`py-2 font-bold uppercase ${r.riskLevel === 'high' ? 'text-red-400' : r.riskLevel === 'medium' ? 'text-amber-400' : 'text-slate-500'}`}>{r.riskLevel}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+
+        <p className="text-xs text-slate-600 font-mono mt-4">
+          Scope note: Route risk is determined by URL path keywords. "Publicly reachable" means HTTP 200 without an auth redirect. Always verify in context — some routes may be intentionally public.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ─── AI LEFTOVERS TAB ─────────────────────────────────────────────────────────
+function AILeftoversTab({ findings }: { findings: any[] }) {
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const copyPrompt = (id: string, prompt: string) => {
+    navigator.clipboard.writeText(prompt);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  if (findings.length === 0) {
+    return (
+      <div className="intel-panel-dark rounded-xl p-8 text-center">
+        <div className="text-emerald-400 text-3xl mb-3">✓</div>
+        <div className="text-sm font-mono text-emerald-400 uppercase tracking-wider">No AI Leftovers Detected</div>
+        <div className="text-xs text-slate-500 font-mono mt-2">No placeholder text, fake names, template links, or TODO comments found in visible content.</div>
+      </div>
+    );
+  }
+
+  const warnings = findings.filter((f: any) => f.severity === 'warning');
+  const infos = findings.filter((f: any) => f.severity === 'info');
+
+  return (
+    <div className="space-y-6">
+      <div className="intel-panel-dark rounded-xl p-6">
+        <h2 className="text-sm font-mono font-semibold text-amber-400 uppercase tracking-widest mb-1">AI Leftovers</h2>
+        <p className="text-xs text-slate-400 font-mono mb-1">
+          AI-built sites often look finished while leaving template text behind.
+        </p>
+        <p className="text-xs text-slate-500 font-mono mb-4">
+          Found {findings.length} potential placeholder(s) — {warnings.length} warnings, {infos.length} info.
+        </p>
+
+        <div className="space-y-3">
+          {findings.map((f: any, i: number) => (
+            <div key={i} className={`border rounded-lg p-4 ${f.severity === 'warning' ? 'border-amber-500/30 bg-amber-500/5' : 'border-slate-700 bg-slate-800/30'}`}>
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={`text-xs font-mono font-bold uppercase ${f.severity === 'warning' ? 'text-amber-400' : 'text-slate-400'}`}>
+                      {f.severity}
+                    </span>
+                    <span className="text-xs text-slate-500 font-mono">•</span>
+                    <span className="text-xs text-slate-400 font-mono">{f.path}</span>
+                  </div>
+                  <div className="text-sm font-mono text-white mb-1">{f.title}</div>
+                  {f.evidence?.context && (
+                    <div className="text-xs text-slate-500 font-mono italic mb-2 bg-black/30 rounded p-2">
+                      {f.evidence.context}
+                    </div>
+                  )}
+                  {f.evidence?.matchedText && (
+                    <div className="text-xs font-mono mb-2">
+                      <span className="text-slate-500">Matched: </span>
+                      <code className="text-amber-300 bg-amber-500/10 px-1 rounded">{f.evidence.matchedText}</code>
+                    </div>
+                  )}
+                </div>
+              </div>
+              {f.fixPrompt && (
+                <div className="mt-3 pt-3 border-t border-white/10 flex items-start justify-between gap-3">
+                  <div className="text-xs text-slate-400 font-mono flex-1 leading-relaxed">{f.fixPrompt}</div>
+                  <button
+                    onClick={() => copyPrompt(f.id, f.fixPrompt)}
+                    className="text-xs font-mono px-3 py-1 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 rounded transition-all shrink-0 uppercase tracking-wider"
+                  >
+                    {copiedId === f.id ? '✓ Copied' : 'Copy Fix'}
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// ─── KEY PATTERNS TAB ─────────────────────────────────────────────────────────
+function KeyPatternsTab({ findings }: { findings: any[] }) {
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const copyPrompt = (id: string, prompt: string) => {
+    navigator.clipboard.writeText(prompt);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  if (findings.length === 0) {
+    return (
+      <div className="intel-panel-dark rounded-xl p-8 text-center">
+        <div className="text-emerald-400 text-3xl mb-3">✓</div>
+        <div className="text-sm font-mono text-emerald-400 uppercase tracking-wider">No Key Patterns Detected</div>
+        <div className="text-xs text-slate-500 font-mono mt-2">No API keys, tokens, or secret-like patterns found in client-side source.</div>
+        <div className="text-xs text-slate-600 font-mono mt-1">Note: This scan covers HTML source and inline scripts. Bundled JS assets require deep check mode.</div>
+      </div>
+    );
+  }
+
+  const criticals = findings.filter((f: any) => f.severity === 'critical');
+  const warnings = findings.filter((f: any) => f.severity === 'warning');
+  const infos = findings.filter((f: any) => f.severity === 'info');
+
+  return (
+    <div className="space-y-6">
+      <div className="intel-panel-dark rounded-xl p-6">
+        <h2 className="text-sm font-mono font-semibold text-red-400 uppercase tracking-widest mb-1">Potential Exposed Keys</h2>
+        <p className="text-xs text-slate-400 font-mono mb-1">
+          We scanned HTML source and inline scripts for key-like patterns.
+        </p>
+        <p className="text-xs text-slate-500 font-mono mb-4">
+          Found {findings.length} pattern(s) — {criticals.length} critical, {warnings.length} warnings, {infos.length} public client keys.
+        </p>
+        {criticals.length > 0 && (
+          <div className="border border-red-500/30 bg-red-500/5 rounded-lg p-3 mb-4 text-xs font-mono text-red-400">
+            ⚠ {criticals.length} high-confidence secret pattern(s) found. If these are real keys, rotate them immediately and move them to server-side environment variables.
+          </div>
+        )}
+        <div className="space-y-3">
+          {findings.map((f: any, i: number) => (
+            <div key={i} className={`border rounded-lg p-4 ${
+              f.severity === 'critical' ? 'border-red-500/30 bg-red-500/5'
+              : f.severity === 'warning' ? 'border-amber-500/30 bg-amber-500/5'
+              : 'border-slate-700 bg-slate-800/30'
+            }`}>
+              <div className="flex items-start justify-between gap-4">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className={`text-xs font-mono font-bold uppercase ${
+                      f.severity === 'critical' ? 'text-red-400'
+                      : f.severity === 'warning' ? 'text-amber-400'
+                      : 'text-slate-400'
+                    }`}>{f.severity}</span>
+                    <span className="text-xs text-slate-500 font-mono">•</span>
+                    <span className="text-xs text-slate-300 font-mono">{f.title}</span>
+                  </div>
+                  <div className="text-xs text-slate-400 font-mono mb-2">{f.description}</div>
+                  {f.evidence?.maskedValue && (
+                    <div className="text-xs font-mono mb-2">
+                      <span className="text-slate-500">Value (masked): </span>
+                      <code className="text-red-300 bg-red-500/10 px-1 rounded">{f.evidence.maskedValue}</code>
+                    </div>
+                  )}
+                  <div className="text-xs text-slate-500 font-mono">{f.whyItMatters}</div>
+                </div>
+                <div className="text-xs font-mono text-slate-400 shrink-0">{f.path}</div>
+              </div>
+              {f.fixPrompt && (
+                <div className="mt-3 pt-3 border-t border-white/10 flex items-start justify-between gap-3">
+                  <div className="text-xs text-slate-400 font-mono flex-1 leading-relaxed">{f.fixPrompt}</div>
+                  <button
+                    onClick={() => copyPrompt(f.id, f.fixPrompt)}
+                    className="text-xs font-mono px-3 py-1 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 rounded transition-all shrink-0 uppercase tracking-wider"
+                  >
+                    {copiedId === f.id ? '✓ Copied' : 'Copy Fix'}
+                  </button>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+        <p className="text-xs text-slate-600 font-mono mt-4">
+          Values are always masked — we never store or display full key values. Public client keys (Supabase anon, Firebase web keys, Stripe publishable) are often intentionally in client-side code — verify your backend access rules are correct.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+// ─── FIX PROMPTS TAB ─────────────────────────────────────────────────────────
+function FixPromptsTab({ fixPrompts, allFindings }: { fixPrompts: any[]; allFindings: any[] }) {
+  const [activeTool, setActiveTool] = useState<string>('generic');
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const tools = ['generic', 'cursor', 'lovable', 'bolt'];
+  const toolLabels: Record<string, string> = {
+    generic: 'Generic',
+    cursor: 'Cursor',
+    lovable: 'Lovable',
+    bolt: 'Bolt.new',
+  };
+
+  const copyPrompt = (id: string, prompt: string) => {
+    navigator.clipboard.writeText(prompt);
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const filteredPrompts = fixPrompts.filter((p: any) => p.tool === activeTool);
+  const uniquePrompts = filteredPrompts.filter((p: any, i: number, arr: any[]) =>
+    arr.findIndex((x: any) => x.findingId === p.findingId) === i
+  );
+
+  if (uniquePrompts.length === 0 && allFindings.length === 0) {
+    return (
+      <div className="intel-panel-dark rounded-xl p-8 text-center">
+        <div className="text-emerald-400 text-3xl mb-3">✓</div>
+        <div className="text-sm font-mono text-emerald-400 uppercase tracking-wider">No Fix Prompts</div>
+        <div className="text-xs text-slate-500 font-mono mt-2">No issues requiring fix prompts were detected.</div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      <div className="intel-panel-dark rounded-xl p-6">
+        <h2 className="text-sm font-mono font-semibold text-emerald-400 uppercase tracking-widest mb-1">Copy-Paste Fix Prompts</h2>
+        <p className="text-xs text-slate-400 font-mono mb-4">
+          Paste these prompts into your AI builder to fix issues. Select your tool:
+        </p>
+
+        {/* Tool selector */}
+        <div className="flex gap-2 mb-6">
+          {tools.map((tool) => (
+            <button
+              key={tool}
+              onClick={() => setActiveTool(tool)}
+              className={`text-xs font-mono px-4 py-2 rounded border transition-all uppercase tracking-wider ${
+                activeTool === tool
+                  ? 'border-emerald-500/60 bg-emerald-500/10 text-emerald-400'
+                  : 'border-slate-700 text-slate-500 hover:border-slate-600 hover:text-slate-400'
+              }`}
+            >
+              {toolLabels[tool]}
+            </button>
+          ))}
+        </div>
+
+        {uniquePrompts.length === 0 ? (
+          <div className="text-xs text-slate-500 font-mono">No fix prompts for this tool filter. Try "Generic".</div>
+        ) : (
+          <div className="space-y-3">
+            {uniquePrompts.map((p: any, i: number) => (
+              <div key={i} className="border border-slate-700 rounded-lg p-4">
+                <div className="flex items-start justify-between gap-3 mb-2">
+                  <div className="text-sm font-mono text-white">{p.title}</div>
+                  <button
+                    onClick={() => copyPrompt(p.findingId, p.prompt)}
+                    className="text-xs font-mono px-3 py-1 border border-emerald-500/40 text-emerald-400 hover:bg-emerald-500/10 rounded transition-all shrink-0 uppercase tracking-wider"
+                  >
+                    {copiedId === p.findingId ? '✓ Copied' : 'Copy'}
+                  </button>
+                </div>
+                <div className="text-xs text-slate-400 font-mono leading-relaxed whitespace-pre-wrap bg-black/30 rounded p-3">
+                  {p.prompt}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        <p className="text-xs text-slate-600 font-mono mt-4">
+          These are deterministic, template-based prompts — no AI generation. Copy and paste directly into your editor or AI builder.
+        </p>
       </div>
     </div>
   );

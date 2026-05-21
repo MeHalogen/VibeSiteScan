@@ -177,7 +177,7 @@ export function PipelineVerticalView({
       <header className="relative z-10 intel-panel-dark border-b ops-hairline px-4 md:px-6 py-3 flex items-center justify-between gap-4">
         <div className="flex items-center gap-4 min-w-0">
           <span className="class-label text-[var(--cream)]/80 shrink-0 hidden sm:inline">
-            LaunchScan
+            VibeSiteScan
           </span>
           <div className="flex items-center gap-2 shrink-0">
             <span className={`signal-dot ${isRunning ? 'active' : 'warn'}`} />

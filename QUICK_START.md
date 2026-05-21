@@ -1,6 +1,6 @@
 # 🚀 Quick Start Guide
 
-## Get LaunchScan Running in 5 Minutes
+## Get VibeSiteScan Running in 5 Minutes
 
 ### Step 1: Install Dependencies (1 min)
 ```bash
@@ -12,7 +12,7 @@ npm install
 1. **Create Supabase Project**
    - Go to https://supabase.com
    - Click "New Project"
-   - Name: "launchscan" (or whatever you want)
+   - Name: "vibesitescan" (or whatever you want)
    - Database Password: (save this securely)
    - Region: Choose closest to you
    - Wait for project to be created (~2 minutes)

@@ -402,7 +402,7 @@ export function PipelineDetailPanel({ stage, allStages }: PipelineDetailPanelPro
             <span className="terminal-dot bg-[#febc2e]" />
             <span className="terminal-dot bg-[#28c840]" />
             <span className="ml-2 text-[10px] text-[#8b949e] uppercase tracking-widest">
-              launchscan — {stage.label.toLowerCase()}
+              vibesitescan — {stage.label.toLowerCase()}
             </span>
           </div>
           <div className="flex-1 overflow-y-auto p-3 space-y-1.5 text-[11.5px] min-h-[160px]">

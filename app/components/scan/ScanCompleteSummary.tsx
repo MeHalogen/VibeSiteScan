@@ -217,7 +217,7 @@ export function ScanCompleteSummary({
               <div>
                 <h3 className="text-blue-400 font-bold mb-3 text-lg">Why this result is diagnostic only</h3>
                 <p className="text-secondary mb-3 leading-relaxed">
-                  This appears to be a large, mature enterprise website. LaunchScan is optimized for AI-built sites, MVPs, landing pages, portfolios, and client previews — not full enterprise websites.
+                  This appears to be a large, mature enterprise website. VibeSiteScan is optimized for AI-built sites, MVPs, landing pages, portfolios, and client previews — not full enterprise websites.
                 </p>
                 <p className="text-secondary leading-relaxed">
                   Large enterprise websites often have complex infrastructure, redirects, regional routing, bot protections, huge page graphs, and intentional SEO/security configurations. A simple launch-readiness decision would be misleading.
@@ -414,7 +414,7 @@ export function ScanCompleteSummary({
             This report reflects only public launch-hygiene checks we could verify. Skipped or unavailable checks reduce coverage and confidence, not the site's quality.
           </p>
           <p className="text-tertiary text-sm leading-relaxed">
-            LaunchScan does not measure brand quality, SEO authority, enterprise SEO strategy, full accessibility compliance, full security posture, business credibility, or ranking potential.
+            VibeSiteScan does not measure brand quality, SEO authority, enterprise SEO strategy, full accessibility compliance, full security posture, business credibility, or ranking potential.
           </p>
         </div>
 

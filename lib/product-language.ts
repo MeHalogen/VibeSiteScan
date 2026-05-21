@@ -1,7 +1,7 @@
 /**
- * Product Language System for LaunchScan
+ * Product Language System for VibeSiteScan
  * 
- * LaunchScan is the final QA gate for AI-built websites.
+ * VibeSiteScan is the final QA gate for AI-built websites.
  * This file defines consistent terminology focused on launch readiness.
  */
 
@@ -9,7 +9,7 @@ export const PRODUCT_LANGUAGE = {
   // Main product positioning
   tagline: "Final QA for AI-built websites",
   heroHeadline: "Check your site before you share it.",
-  heroSubheadline: "LaunchScan catches the production basics AI builders often miss: share previews, metadata, broken routes, sitemap, robots.txt, forms, mobile setup, and launch hygiene.",
+  heroSubheadline: "VibeSiteScan catches the production basics AI builders often miss: share previews, metadata, broken routes, sitemap, robots.txt, forms, mobile setup, and launch hygiene.",
   
   // Scan terminology
   scan: {
@@ -86,10 +86,10 @@ export const PRODUCT_LANGUAGE = {
   // Helper text
   helpers: {
     target: "Built for AI-generated websites, landing pages, SaaS MVPs, and fast-shipped projects.",
-    why: "AI can build the page. It usually won't remember your favicon, OG image, canonical tags, sitemap, robots.txt, broken routes, or share preview. LaunchScan checks those before your audience does.",
-    rescan: "Fixed something? Run LaunchScan again and verify before sharing.",
+    why: "AI can build the page. It usually won't remember your favicon, OG image, canonical tags, sitemap, robots.txt, broken routes, or share preview. VibeSiteScan checks those before your audience does.",
+    rescan: "Fixed something? Run VibeSiteScan again and verify before sharing.",
     diagnosticOnly: "This site is outside our ideal target. We checked what we could, but we are not assigning a share-readiness decision.",
-    enterpriseTarget: "This appears to be a large, mature enterprise website. LaunchScan is optimized for AI-built sites, MVPs, landing pages, portfolios, and client previews — not full enterprise websites.",
+    enterpriseTarget: "This appears to be a large, mature enterprise website. VibeSiteScan is optimized for AI-built sites, MVPs, landing pages, portfolios, and client previews — not full enterprise websites.",
     coverageNote: "Coverage affects confidence, not website quality.",
     limitedDiagnostic: "This is a limited diagnostic, not a full audit.",
   },

@@ -3,7 +3,7 @@
 /**
  * Limitation Checker
  * 
- * Run this script to see which limitations still exist in your LaunchScan setup.
+ * Run this script to see which limitations still exist in your VibeSiteScan setup.
  * 
  * Usage:
  *   node check-limitations.js
@@ -12,7 +12,7 @@
 const fs = require('fs');
 const path = require('path');
 
-console.log('\n🔍 LaunchScan Limitation Checker\n');
+console.log('\n🔍 VibeSiteScan Limitation Checker\n');
 console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
 
 const checks = [

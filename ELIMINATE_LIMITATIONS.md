@@ -1,6 +1,6 @@
 # Eliminate Limitations - Implementation Roadmap
 
-This document provides a **step-by-step guide** to eliminate all current scanning limitations and transform LaunchScan into a professional-grade web audit tool.
+This document provides a **step-by-step guide** to eliminate all current scanning limitations and transform VibeSiteScan into a professional-grade web audit tool.
 
 ---
 
@@ -442,4 +442,4 @@ await new Promise(resolve => setTimeout(resolve, 1000));
 
 ---
 
-**Need help?** Open an issue or contact support@launchscan.com
+**Need help?** Open an issue or contact support@vibesitescan.com

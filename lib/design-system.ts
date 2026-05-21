@@ -1,5 +1,5 @@
 /**
- * LaunchScan Design System
+ * VibeSiteScan Design System
  * Professional forensic audit tool design
  */
 

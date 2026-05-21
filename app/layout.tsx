@@ -10,8 +10,8 @@ const jetbrainsMono = JetBrains_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'SiteProof - Final QA for AI-Built Websites',
-  description: 'Proof your AI-built site before your audience sees it. Check share previews, metadata, broken routes, and get a copy-paste AI fix prompt for Cursor, Lovable, Bolt, and Replit.',
+  title: 'VibeSiteScan - Final QA for AI-Built Websites',
+  description: 'Paste your URL. VibeSiteScan catches broken routes, missing share previews, AI leftovers, exposed keys, dead forms, and gives you copy-paste fix prompts for Cursor, Lovable, Bolt, and Replit.',
 }
 
 export default function RootLayout({

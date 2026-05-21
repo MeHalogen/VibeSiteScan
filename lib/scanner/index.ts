@@ -1,8 +1,13 @@
 import * as cheerio from 'cheerio';
 import fetch from 'cross-fetch';
-import { normalizeUrl, isPrivateOrLocal, isSameOrigin } from './utils';
+import { normalizeUrl, isPrivateOrLocal, isSameOrigin, COMMON_ROUTE_PROBES } from './utils';
 import { createIssueFromCode } from './issueKnowledgeBase';
 import { calculateLaunchReadiness } from '@/lib/launch-readiness';
+import { buildPublicRouteMap, generateExposureFindings } from './rules/exposure-rules';
+import { detectAILeftovers } from './rules/ai-leftover-rules';
+import { detectKeyPatterns } from './rules/key-pattern-rules';
+import { extractDetectedForms, generateFormFindings } from './rules/form-rules';
+import { generateFixPrompts } from './fix-prompts';
 import type {
   ScanResult,
   PageData,
@@ -15,8 +20,13 @@ import type {
   SitemapData,
   BrowserChecksData,
 } from './types';
+import type { PublicRoute } from './rules/exposure-rules';
+import type { AILeftoverFinding } from './rules/ai-leftover-rules';
+import type { KeyPatternFinding } from './rules/key-pattern-rules';
+import type { DetectedForm, FormFinding } from './rules/form-rules';
+import type { FixPrompt } from './fix-prompts';
 
-const USER_AGENT = 'LaunchScanBot/1.0 (+https://launchscan.app)';
+const USER_AGENT = 'VibeSiteScanBot/1.0 (+https://vibesitescan.app)';
 const TIMEOUT = 15000;
 const LINK_TIMEOUT = 10000;
 
@@ -1176,6 +1186,75 @@ export async function runScan(
       );
     }
   }
+
+  // ── Run new rule engines ────────────────────────────────────────────────────
+  emit({ type: 'stage_start', stageId: 'exposure', message: 'Mapping public routes' });
+  const publicRoutes = buildPublicRouteMap(pages.map(p => ({
+    url: p.url,
+    statusCode: p.statusCode,
+    finalUrl: p.finalUrl,
+    seo: { title: p.seo?.title },
+    html: p.html,
+  })));
+  const exposureFindings = generateExposureFindings(publicRoutes);
+  const riskyRoutes = publicRoutes.filter(r => r.riskLevel === 'high' || r.riskLevel === 'medium');
+  emit({
+    type: 'stage_end',
+    stageId: 'exposure',
+    status: 'completed',
+    metrics: { publicRoutes: publicRoutes.length, riskyRoutes: riskyRoutes.length },
+  });
+
+  emit({ type: 'stage_start', stageId: 'ai_leftovers', message: 'Detecting AI leftovers' });
+  const aiLeftoverFindings = detectAILeftovers(pages.map(p => ({
+    url: p.url,
+    html: p.html,
+  })));
+  emit({
+    type: 'stage_end',
+    stageId: 'ai_leftovers',
+    status: 'completed',
+    metrics: { aiLeftovers: aiLeftoverFindings.length },
+  });
+
+  emit({ type: 'stage_start', stageId: 'keys', message: 'Scanning for exposed keys' });
+  const keyPatternFindings = detectKeyPatterns(pages.map(p => ({
+    url: p.url,
+    html: p.html,
+  })));
+  emit({
+    type: 'stage_end',
+    stageId: 'keys',
+    status: 'completed',
+    metrics: { keyPatterns: keyPatternFindings.length },
+  });
+
+  // Enhanced form extraction with new engine
+  emit({ type: 'stage_start', stageId: 'form_analysis', message: 'Analyzing forms' });
+  const enhancedForms: any[] = [];
+  for (const page of pages) {
+    if (page.statusCode === 200 && page.html) {
+      const pageForms = extractDetectedForms(page.url, page.html);
+      enhancedForms.push(...pageForms);
+    }
+  }
+  const formFindings = generateFormFindings(enhancedForms);
+  emit({
+    type: 'stage_end',
+    stageId: 'form_analysis',
+    status: 'completed',
+    metrics: { forms: enhancedForms.length, formIssues: formFindings.length },
+  });
+
+  // Generate fix prompts for all new finding types
+  const allNewFindings = [
+    ...exposureFindings,
+    ...aiLeftoverFindings,
+    ...keyPatternFindings,
+    ...formFindings,
+  ];
+  const fixPrompts = generateFixPrompts(allNewFindings, ['generic', 'cursor', 'lovable', 'bolt']);
+
   emit({ type: 'stage_start', stageId: 'report', message: 'Computing launch decision' });
   const score = calculateScore(issues);
 
@@ -1201,7 +1280,7 @@ export async function runScan(
   // Build scan result object for launch readiness calculation
   const scanResultForReadiness = {
     target_url: rootUrl,
-    scan_depth: depth, // Use 'depth' parameter from function signature
+    scan_depth: depth,
     pages_count: pages.length,
     issues,
     discovered_pages_count: discoveredUrls.size,
@@ -1217,8 +1296,8 @@ export async function runScan(
     browser_checks_status: browserChecks.browserChecksStatus,
     robots_found: robotsData.robotsFound,
     sitemap_found: sitemapData?.sitemapFound || false,
-    blocked_requests_count: 0, // TODO: Track this
-    skipped_checks_count: 0, // TODO: Track this
+    blocked_requests_count: 0,
+    skipped_checks_count: 0,
   };
 
   // Calculate launch readiness
@@ -1227,7 +1306,15 @@ export async function runScan(
     type: 'stage_end',
     stageId: 'report',
     status: 'completed',
-    metrics: { launchScore: score, issuesCount: issues.length, coverage: launchReadiness.scanCoverage, decision: launchReadiness.launchDecision },
+    metrics: {
+      launchScore: score,
+      issuesCount: issues.length,
+      coverage: launchReadiness.scanCoverage,
+      decision: launchReadiness.launchDecision,
+      aiLeftovers: aiLeftoverFindings.length,
+      riskyRoutes: riskyRoutes.length,
+      keyPatterns: keyPatternFindings.length,
+    },
   });
 
   return {
@@ -1235,14 +1322,23 @@ export async function runScan(
     pages,
     linkResults: allLinks,
     issues,
-    score: legacyScore, // Keep for backwards compatibility
-    launchReadiness, // NEW: Launch readiness scoring
+    score: legacyScore,
+    launchReadiness,
     durationMs,
     consoleEvents,
     formChecks,
     robotsData,
     sitemapData,
     browserChecks,
+    // New engine outputs
+    publicRoutes,
+    exposureFindings,
+    aiLeftoverFindings,
+    keyPatternFindings,
+    enhancedForms,
+    formFindings,
+    fixPrompts,
+    // Summary stats
     discoveredPagesCount: discoveredUrls.size,
     skippedPagesCount: skippedUrls.size,
     internalLinksCount,

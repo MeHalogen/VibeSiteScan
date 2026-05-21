@@ -2,7 +2,7 @@
 
 ## Overview
 
-The "Diagnostic Report Only" state is a special report type shown when LaunchScan scans large, mature enterprise websites that are outside the product's ideal use case.
+The "Diagnostic Report Only" state is a special report type shown when VibeSiteScan scans large, mature enterprise websites that are outside the product's ideal use case.
 
 This state protects product credibility by clearly communicating:
 - The scan completed successfully
@@ -90,7 +90,7 @@ Shows scan metadata:
 Clear explanation of what was and wasn't measured:
 - Only public launch-hygiene checks
 - Skipped checks reduce coverage/confidence, not site quality
-- LaunchScan doesn't measure brand quality, SEO authority, enterprise strategy, etc.
+- VibeSiteScan doesn't measure brand quality, SEO authority, enterprise strategy, etc.
 
 ### 6. What We Checked / What We Don't Check
 Two-column comparison showing:
@@ -197,10 +197,10 @@ The diagnostic state does NOT affect normal scan results:
 ## Product Language
 
 ### Product Name Consistency
-The component uses "LaunchScan" throughout:
-- "LaunchScan checks..."
-- "LaunchScan does not measure..."
-- "LaunchScan is optimized for..."
+The component uses "VibeSiteScan" throughout:
+- "VibeSiteScan checks..."
+- "VibeSiteScan does not measure..."
+- "VibeSiteScan is optimized for..."
 
 If the product is renamed, update all references consistently.
 
