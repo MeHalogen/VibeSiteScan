@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { motion } from 'framer-motion';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { ScanInitializer } from "@/app/components/scan/ScanInitializer";
 
 const SCAN_LOGS = [
@@ -45,6 +45,41 @@ const TICKER = [
 export default function HomePage() {
   const [scanCount, setScanCount] = useState(2_847);
   const [showScanner, setShowScanner] = useState(false);
+  const vibeRef = useRef<HTMLSpanElement>(null);
+  const mouseX = useRef(0);
+  const autoPos = useRef(0);
+  const rafRef = useRef<number>(0);
+  const lastMouseTime = useRef(0);
+
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      mouseX.current = (e.clientX / window.innerWidth) * 100;
+      lastMouseTime.current = Date.now();
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+
+    const tick = () => {
+      if (!vibeRef.current) { rafRef.current = requestAnimationFrame(tick); return; }
+      const timeSinceMouse = Date.now() - lastMouseTime.current;
+      let pos: number;
+      if (timeSinceMouse < 200) {
+        // Mouse is active — follow cursor
+        pos = mouseX.current;
+      } else {
+        // No mouse — auto-flow slowly
+        autoPos.current = (autoPos.current + 0.3) % 100;
+        pos = autoPos.current;
+      }
+      vibeRef.current.style.backgroundPosition = `${pos}% 50%`;
+      rafRef.current = requestAnimationFrame(tick);
+    };
+    rafRef.current = requestAnimationFrame(tick);
+
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      cancelAnimationFrame(rafRef.current);
+    };
+  }, []);
 
   useEffect(() => {
     const id = setInterval(
@@ -114,15 +149,10 @@ export default function HomePage() {
             </motion.div>
 
             <style>{`
-              @keyframes flowingRed {
-                0%   { background-position: 0% 50%; }
-                50%  { background-position: 100% 50%; }
-                100% { background-position: 0% 50%; }
-              }
               .vibe-gradient {
                 background: linear-gradient(90deg, #6b0000, #b91c1c, #ef4444, #fca5a5, #b91c1c, #6b0000);
                 background-size: 300% 300%;
-                animation: flowingRed 3s ease infinite;
+                background-position: 0% 50%;
                 -webkit-background-clip: text;
                 -webkit-text-fill-color: transparent;
                 background-clip: text;
@@ -135,7 +165,7 @@ export default function HomePage() {
               className="font-bold leading-none"
               style={{ fontSize: "clamp(3.5rem, 14vw, 10rem)" }}
             >
-              <span className="vibe-gradient">VIBE</span>
+              <span ref={vibeRef} className="vibe-gradient">VIBE</span>
               <span className="text-white">SITE</span>
               <br />
               <span className="text-emerald-400 font-mono tracking-tighter">SCAN</span>
