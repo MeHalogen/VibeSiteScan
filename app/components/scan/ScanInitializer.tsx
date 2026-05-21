@@ -43,7 +43,7 @@ export function ScanInitializer() {
       });
       if (!response.ok || !response.body) throw new Error("Scan failed");
 
-      async function* ndjsonEvents(body: ReadableStream<Uint8Array>) {
+      const ndjsonEvents = async function* (body: ReadableStream<Uint8Array>) {
         const reader = body.getReader();
         const decoder = new TextDecoder();
         let buffer = "";
