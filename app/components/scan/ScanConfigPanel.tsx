@@ -139,7 +139,7 @@ Site URL: <PASTE_YOUR_URL_HERE>`;
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.5 }}
-      className="relative min-h-screen"
+      className="relative min-h-screen overflow-x-hidden"
       style={{ backgroundColor: "#05080d", color: "#f0f4ff" }}
     >
       {/* Dark grid */}
@@ -176,11 +176,11 @@ Site URL: <PASTE_YOUR_URL_HERE>`;
         }}
       />
 
-      {/* Decorative corner labels */}
-      <span className="absolute top-4 left-4 font-mono text-[9px] text-white/15 pointer-events-none select-none">STATUS: READY</span>
-      <span className="absolute top-4 right-4 font-mono text-[9px] text-white/15 pointer-events-none select-none">ENGINE: RULES-BASED</span>
-      <span className="absolute bottom-4 left-4 font-mono text-[9px] text-white/15 pointer-events-none select-none">MODE: PRE-LAUNCH</span>
-      <span className="absolute bottom-4 right-4 font-mono text-[9px] text-white/15 pointer-events-none select-none">NO AI GUESSING</span>
+      {/* Decorative corner labels — hidden on mobile */}
+      <span className="hidden sm:block absolute top-4 left-4 font-mono text-[9px] text-white/20 pointer-events-none select-none">STATUS: READY</span>
+      <span className="hidden sm:block absolute top-4 right-4 font-mono text-[9px] text-white/20 pointer-events-none select-none">ENGINE: RULES-BASED</span>
+      <span className="hidden sm:block absolute bottom-4 left-4 font-mono text-[9px] text-white/20 pointer-events-none select-none">MODE: PRE-LAUNCH</span>
+      <span className="hidden sm:block absolute bottom-4 right-4 font-mono text-[9px] text-white/20 pointer-events-none select-none">NO AI GUESSING</span>
 
       <div className="container mx-auto px-4 py-8 md:py-10 max-w-7xl relative">
 
@@ -192,35 +192,35 @@ Site URL: <PASTE_YOUR_URL_HERE>`;
           <div className="flex items-center gap-3">
             <div
               className="h-9 w-9 flex items-center justify-center"
-              style={{ border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.03)" }}
+              style={{ border: "1px solid rgba(255,255,255,0.2)", background: "rgba(49,233,129,0.07)" }}
             >
-              <span className="font-mono font-semibold text-white/75 text-sm">V</span>
+              <span className="font-mono font-semibold text-white text-sm">V</span>
             </div>
             <div className="leading-tight">
-              <div className="font-semibold tracking-tight text-white/90 text-sm">VibeSite Scan</div>
-              <div className="font-mono text-[10px] tracking-wide" style={{ color: "rgba(240,244,255,0.35)" }}>
+              <div className="font-semibold tracking-tight text-white text-[15px]">VibeSite Scan</div>
+              <div className="font-mono text-[10px] tracking-wide" style={{ color: "rgba(240,244,255,0.55)" }}>
                 Final QA for AI-built websites
               </div>
             </div>
           </div>
 
           <nav className="hidden md:flex items-center gap-6">
-            <Link href="/r/sample" className="font-mono text-xs tracking-wide transition-colors" style={{ color: "rgba(240,244,255,0.5)" }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(240,244,255,0.85)")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(240,244,255,0.5)")}
+            <Link href="/r/sample" className="font-mono text-xs tracking-wide transition-colors" style={{ color: "rgba(240,244,255,0.62)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(240,244,255,0.9)")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(240,244,255,0.62)")}
             >
               Sample Report
             </Link>
-            <Link href="/pricing" className="font-mono text-xs tracking-wide transition-colors" style={{ color: "rgba(240,244,255,0.5)" }}
-              onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(240,244,255,0.85)")}
-              onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(240,244,255,0.5)")}
+            <Link href="/pricing" className="font-mono text-xs tracking-wide transition-colors" style={{ color: "rgba(240,244,255,0.62)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(240,244,255,0.9)")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(240,244,255,0.62)")}
             >
               Pricing
             </Link>
             <Link
               href="/dashboard"
               className="inline-flex items-center gap-2 px-3 py-2 font-mono text-xs tracking-wide transition-colors"
-              style={{ border: "1px solid rgba(255,255,255,0.12)", background: "rgba(255,255,255,0.03)", color: "rgba(240,244,255,0.65)" }}
+              style={{ border: "1px solid rgba(255,255,255,0.18)", background: "rgba(255,255,255,0.05)", color: "rgba(240,244,255,0.80)" }}
             >
               Dashboard / Sign in
             </Link>
@@ -253,7 +253,7 @@ Site URL: <PASTE_YOUR_URL_HERE>`;
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.16, duration: 0.5 }}
             className="mt-4 text-base md:text-lg max-w-2xl mx-auto"
-            style={{ color: "rgba(240,244,255,0.5)" }}
+            style={{ color: "rgba(240,244,255,0.68)" }}
           >
             Choose scan depth. We&apos;ll check public routes, metadata, links, forms, and launch hygiene before you share.
           </motion.p>
@@ -265,9 +265,14 @@ Site URL: <PASTE_YOUR_URL_HERE>`;
             transition={{ delay: 0.22, duration: 0.5 }}
             className="mt-8 max-w-3xl mx-auto"
           >
+            {/* Target URL label */}
+            <div className="text-left mb-2 font-mono text-[11px] tracking-[0.18em] uppercase"
+              style={{ color: "rgba(49,233,129,0.7)" }}>
+              TARGET URL
+            </div>
             <div
               className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center p-2"
-              style={{ background: "rgba(10,16,26,0.72)", border: "1px solid rgba(255,255,255,0.08)" }}
+              style={{ background: "rgba(10,16,26,0.80)", border: "1px solid rgba(255,255,255,0.13)" }}
             >
               <div className="flex-1 relative">
                 <input
@@ -276,26 +281,27 @@ Site URL: <PASTE_YOUR_URL_HERE>`;
                   onChange={(e) => { setTargetUrl(e.target.value); validateUrl(e.target.value); }}
                   onKeyDown={(e) => e.key === "Enter" && handleStartScan()}
                   placeholder="https://your-site.com"
-                  className="w-full h-12 px-4 sm:px-5 font-mono text-sm sm:text-base outline-none transition-all"
+                  className="w-full h-13 px-4 sm:px-5 font-mono text-sm sm:text-base outline-none transition-all placeholder:text-white/25"
                   style={{
-                    background: "rgba(5,8,13,0.8)",
+                    background: "rgba(5,8,13,0.9)",
                     border: urlError
-                      ? "1px solid rgba(255,77,94,0.7)"
+                      ? "1px solid rgba(255,77,94,0.75)"
                       : isValidUrl
-                      ? "1px solid rgba(49,233,129,0.5)"
-                      : "1px solid rgba(255,255,255,0.08)",
+                      ? "1px solid rgba(49,233,129,0.6)"
+                      : "1px solid rgba(255,255,255,0.14)",
                     color: "#f0f4ff",
+                    height: "3.25rem",
                   }}
                   onFocus={(e) => {
-                    e.target.style.borderColor = "rgba(49,233,129,0.6)";
-                    e.target.style.boxShadow = "0 0 0 3px rgba(49,233,129,0.1)";
+                    e.target.style.borderColor = "rgba(49,233,129,0.7)";
+                    e.target.style.boxShadow = "0 0 0 3px rgba(49,233,129,0.12), inset 0 0 12px rgba(49,233,129,0.03)";
                   }}
                   onBlur={(e) => {
                     e.target.style.borderColor = urlError
-                      ? "rgba(255,77,94,0.7)"
+                      ? "rgba(255,77,94,0.75)"
                       : isValidUrl
-                      ? "rgba(49,233,129,0.5)"
-                      : "rgba(255,255,255,0.08)";
+                      ? "rgba(49,233,129,0.6)"
+                      : "rgba(255,255,255,0.14)";
                     e.target.style.boxShadow = "none";
                   }}
                   inputMode="url"
@@ -314,32 +320,32 @@ Site URL: <PASTE_YOUR_URL_HERE>`;
 
               <motion.button
                 onClick={handleStartScan}
-                whileHover={{ y: -1, boxShadow: "0 0 20px rgba(49,233,129,0.25)" }}
+                whileHover={{ y: -1, boxShadow: "0 0 20px rgba(49,233,129,0.3)" }}
                 whileTap={{ scale: 0.99 }}
-                className="h-12 px-6 font-mono text-xs font-semibold tracking-widest uppercase inline-flex items-center justify-center gap-2 transition-all"
-                style={{ background: "#31e981", color: "#05080d" }}
+                className="h-12 px-6 font-mono text-xs font-semibold tracking-widest uppercase inline-flex items-center justify-center gap-2 transition-all shrink-0"
+                style={{ background: "#31e981", color: "#05080d", height: "3.25rem" }}
               >
                 Run Free Scan <ArrowRight className="w-4 h-4" />
               </motion.button>
             </div>
 
-            <div className="mt-3 flex flex-col sm:flex-row items-center justify-center gap-3 font-mono text-[11px]"
-              style={{ color: "rgba(240,244,255,0.38)" }}>
-              <span className="inline-flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400/70" />Public pages only
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 font-mono text-[11px]"
+              style={{ color: "rgba(240,244,255,0.60)" }}>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400/80" />Public pages only
               </span>
-              <span className="hidden sm:block" style={{ color: "rgba(255,255,255,0.15)" }}>·</span>
-              <span className="inline-flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400/70" />No code required
+              <span className="hidden sm:block" style={{ color: "rgba(255,255,255,0.18)" }}>·</span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400/80" />No code required
               </span>
-              <span className="hidden sm:block" style={{ color: "rgba(255,255,255,0.15)" }}>·</span>
-              <Link href="/r/sample" className="inline-flex items-center gap-1 hover:text-white/65 transition-colors">
+              <span className="hidden sm:block" style={{ color: "rgba(255,255,255,0.18)" }}>·</span>
+              <Link href="/r/sample" className="inline-flex items-center gap-1 hover:text-white/80 transition-colors">
                 View sample report <ExternalLink className="w-3 h-3" />
               </Link>
             </div>
 
             {urlError && (
-              <div className="mt-3 font-mono text-xs text-red-400/90 flex items-center justify-center gap-2">
+              <div className="mt-3 font-mono text-xs text-red-400 flex items-center justify-center gap-2">
                 <AlertCircle className="w-4 h-4" />{urlError}
               </div>
             )}
@@ -350,18 +356,19 @@ Site URL: <PASTE_YOUR_URL_HERE>`;
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ delay: 0.30, duration: 0.5 }}
-            className="mt-7 flex flex-wrap items-center justify-center gap-2"
+            className="mt-6 flex flex-wrap items-center justify-center gap-2"
           >
             {["Works with Vercel", "Works with Netlify", "Works with Replit", "Built for Lovable/Bolt/Cursor", "Public pages only", "No code required"].map((pill) => (
               <span
                 key={pill}
-                className="px-3 py-1.5 font-mono text-[11px] tracking-wide"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 font-mono text-[11px] tracking-wide transition-colors cursor-default"
                 style={{
-                  background: "rgba(255,255,255,0.02)",
-                  border: "1px solid rgba(255,255,255,0.08)",
-                  color: "rgba(240,244,255,0.45)",
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.13)",
+                  color: "rgba(240,244,255,0.72)",
                 }}
               >
+                <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ background: "rgba(49,233,129,0.6)" }} />
                 {pill}
               </span>
             ))}
@@ -386,7 +393,7 @@ Site URL: <PASTE_YOUR_URL_HERE>`;
                   [01] SCAN CONFIGURATION
                 </div>
                 <h2 className="text-lg font-semibold text-white/90">Launch Check Setup</h2>
-                <p className="mt-1 text-sm" style={{ color: "rgba(240,244,255,0.45)" }}>
+                <p className="mt-1 text-sm" style={{ color: "rgba(240,244,255,0.65)" }}>
                   Choose scan depth. We&apos;ll generate a fix prompt after the report.
                 </p>
               </div>
@@ -448,10 +455,10 @@ Site URL: <PASTE_YOUR_URL_HERE>`;
                       <div className="font-semibold text-white/85 text-sm">{tier.title}</div>
                       {badge}
                     </div>
-                    <div className="text-xs" style={{ color: "rgba(240,244,255,0.55)" }}>{tier.subtitle}</div>
-                    <div className="text-[11px] mt-1" style={{ color: "rgba(240,244,255,0.32)" }}>{tier.details}</div>
+                    <div className="text-xs" style={{ color: "rgba(240,244,255,0.70)" }}>{tier.subtitle}</div>
+                    <div className="text-[11px] mt-1" style={{ color: "rgba(240,244,255,0.52)" }}>{tier.details}</div>
                     <div className="mt-3 font-mono text-[11px]"
-                      style={{ color: selected ? "rgba(49,233,129,0.7)" : "rgba(240,244,255,0.38)" }}>
+                      style={{ color: selected ? "rgba(49,233,129,0.80)" : "rgba(240,244,255,0.58)" }}>
                       {tier.duration}
                     </div>
                   </motion.button>
@@ -469,7 +476,7 @@ Site URL: <PASTE_YOUR_URL_HERE>`;
                 <div className="font-mono text-[11px] tracking-[0.18em] uppercase" style={{ color: "rgba(49,233,129,0.6)" }}>
                   [03] OPTIONAL MODULES
                 </div>
-                <span className="font-mono text-[10px] tracking-widest" style={{ color: "rgba(240,244,255,0.3)" }}>
+                <span className="font-mono text-[10px] tracking-widest" style={{ color: "rgba(240,244,255,0.55)" }}>
                   {optionalOpen ? "HIDE ↑" : "SHOW ↓"}
                 </span>
               </button>
@@ -499,8 +506,8 @@ Site URL: <PASTE_YOUR_URL_HERE>`;
                       }}
                     >
                       <div>
-                        <div className="text-sm font-medium text-white/80">{opt.label}</div>
-                        <div className="text-[11px] mt-1" style={{ color: "rgba(240,244,255,0.35)" }}>{opt.hint}</div>
+                        <div className="text-sm font-medium text-white/85">{opt.label}</div>
+                        <div className="text-[11px] mt-1" style={{ color: "rgba(240,244,255,0.60)" }}>{opt.hint}</div>
                       </div>
                       <div
                         className="h-6 w-11 p-0.5 flex items-center shrink-0 transition-colors"
@@ -544,7 +551,7 @@ Site URL: <PASTE_YOUR_URL_HERE>`;
                 Run Free Scan <ArrowRight className="w-4 h-4" />
               </motion.button>
               <div className="mt-4 flex flex-wrap items-center justify-center gap-3 font-mono text-[10px] tracking-widest"
-                style={{ color: "rgba(240,244,255,0.4)" }}>
+                style={{ color: "rgba(240,244,255,0.58)" }}>
                 <span style={{ color: "rgba(49,233,129,0.5)" }}>◆</span>
                 <span>RULES-BASED CHECKS</span>
                 <span style={{ color: "rgba(49,233,129,0.5)" }}>◆</span>
@@ -601,7 +608,7 @@ Site URL: <PASTE_YOUR_URL_HERE>`;
                     Fix Before Sharing
                   </span>
                   <span className="font-mono text-[10px] tracking-widest uppercase"
-                    style={{ color: "rgba(240,244,255,0.32)" }}>
+                    style={{ color: "rgba(240,244,255,0.52)" }}>
                     Launch Readiness
                   </span>
                 </div>
@@ -610,7 +617,7 @@ Site URL: <PASTE_YOUR_URL_HERE>`;
                   <div className="font-semibold tracking-tight text-white/90" style={{ fontSize: "2.5rem", lineHeight: 1 }}>
                     72<span className="text-xl" style={{ color: "rgba(240,244,255,0.32)" }}>/100</span>
                   </div>
-                  <div className="text-right font-mono text-sm" style={{ color: "rgba(240,244,255,0.42)" }}>
+                  <div className="text-right font-mono text-sm" style={{ color: "rgba(240,244,255,0.65)" }}>
                     <div>Coverage: <span className="text-emerald-400">91%</span></div>
                     <div>Confidence: <span className="text-white/75">High</span></div>
                   </div>
@@ -618,13 +625,13 @@ Site URL: <PASTE_YOUR_URL_HERE>`;
 
                 <div className="mt-5" style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: "1.25rem" }}>
                   <div className="font-mono text-[11px] uppercase tracking-widest mb-3"
-                    style={{ color: "rgba(240,244,255,0.38)" }}>
+                    style={{ color: "rgba(240,244,255,0.58)" }}>
                     Top Blockers
                   </div>
                   <ol className="space-y-2">
                     {["Missing OG image", "Broken internal link", "Dead contact form", "Placeholder CTA links"].map((t, idx) => (
                       <li key={t} className="flex items-start gap-3 font-mono text-sm"
-                        style={{ color: "rgba(240,244,255,0.58)" }}>
+                        style={{ color: "rgba(240,244,255,0.72)" }}>
                         <span
                           className="mt-0.5 h-5 w-5 flex items-center justify-center text-[10px] shrink-0"
                           style={{ border: "1px solid rgba(255,77,94,0.28)", color: "#ff4d5e" }}
@@ -647,15 +654,15 @@ Site URL: <PASTE_YOUR_URL_HERE>`;
               className="mt-4 w-full h-11 font-mono text-xs font-semibold tracking-widest uppercase inline-flex items-center justify-center gap-2 transition-all"
               style={{
                 background: "transparent",
-                border: "1px solid rgba(255,255,255,0.1)",
-                color: copied ? "#31e981" : "rgba(240,244,255,0.55)",
+                border: "1px solid rgba(255,255,255,0.14)",
+                color: copied ? "#31e981" : "rgba(240,244,255,0.72)",
               }}
             >
               <Copy className="w-4 h-4" />
               {copied ? "Copied ✓" : "Copy AI Fix Prompt"}
             </motion.button>
 
-            <p className="mt-3 font-mono text-[11px] text-center" style={{ color: "rgba(240,244,255,0.28)" }}>
+            <p className="mt-3 font-mono text-[11px] text-center" style={{ color: "rgba(240,244,255,0.50)" }}>
               After every scan, get evidence and copy-paste fix prompts for Cursor, Lovable, Bolt, or Replit.
             </p>
           </motion.div>
@@ -669,7 +676,7 @@ Site URL: <PASTE_YOUR_URL_HERE>`;
               WHAT AI BUILDERS MISS
             </div>
             <h3 className="text-2xl font-semibold text-white/85">Common launch hygiene issues</h3>
-            <p className="mt-2 text-sm" style={{ color: "rgba(240,244,255,0.42)" }}>
+            <p className="mt-2 text-sm" style={{ color: "rgba(240,244,255,0.60)" }}>
               These are the issues that make a &quot;done&quot; site feel unfinished the moment you share the link.
             </p>
           </div>
@@ -694,7 +701,7 @@ Site URL: <PASTE_YOUR_URL_HERE>`;
                 style={{ background: "rgba(10,16,26,0.6)", border: "1px solid rgba(255,255,255,0.07)" }}
               >
                 <div className="text-white/80 font-medium text-sm">{c.title}</div>
-                <div className="mt-2 text-sm" style={{ color: "rgba(240,244,255,0.42)" }}>{c.desc}</div>
+                <div className="mt-2 text-sm" style={{ color: "rgba(240,244,255,0.60)" }}>{c.desc}</div>
               </motion.div>
             ))}
           </div>
@@ -726,7 +733,7 @@ Site URL: <PASTE_YOUR_URL_HERE>`;
                 <div className="font-mono text-[11px] tracking-widest mb-2"
                   style={{ color: "rgba(49,233,129,0.52)" }}>{s.step}</div>
                 <div className="text-white/80 font-medium text-sm">{s.title}</div>
-                <div className="mt-1 text-sm" style={{ color: "rgba(240,244,255,0.38)" }}>{s.desc}</div>
+                <div className="mt-1 text-sm" style={{ color: "rgba(240,244,255,0.55)" }}>{s.desc}</div>
               </motion.div>
             ))}
           </div>
