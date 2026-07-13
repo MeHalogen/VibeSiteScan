@@ -14,6 +14,8 @@ export interface PipelineStage {
   shortLabel: string;
   description: string;
   status: StageStatus;
+  /** Human-readable reason for the current status (e.g. why a stage was skipped or failed). */
+  statusMessage?: string;
   startedAt?: Date;
   completedAt?: Date;
   metrics?: Record<string, string | number | boolean | null>;
@@ -25,6 +27,8 @@ export interface ScanLog {
   timestamp: Date;
   message: string;
   severity?: "info" | "warning" | "error" | "success";
+  /** Stage this log belongs to; undefined for scan-level milestones. */
+  stageId?: string;
 }
 
 export interface ScanConfig {
@@ -55,6 +59,14 @@ export interface ScanState {
   };
 }
 
+/**
+ * Pipeline stage registry — the contract between scanner and UI.
+ *
+ * Order matters: stages are listed in actual execution order so the
+ * "running" indicator moves top-to-bottom during a scan. Every stageId
+ * emitted by lib/scanner/index.ts must exist here, or the orchestrator
+ * will surface a warning in the evidence stream.
+ */
 export const PIPELINE_STAGES: Omit<PipelineStage, "status" | "startedAt" | "completedAt" | "metrics" | "logs">[] = [
   {
     id: "init",
@@ -62,6 +74,13 @@ export const PIPELINE_STAGES: Omit<PipelineStage, "status" | "startedAt" | "comp
     shortLabel: "TARGET",
     description: "URL normalization • HTTPS check • Domain reachability • Redirect destination",
     icon: "Target",
+  },
+  {
+    id: "score",
+    label: "Indexing",
+    shortLabel: "INDEXING",
+    description: "Sitemap.xml • Robots.txt • Noindex status • Crawl hints • Discoverability",
+    icon: "Database",
   },
   {
     id: "fetch",
@@ -92,6 +111,13 @@ export const PIPELINE_STAGES: Omit<PipelineStage, "status" | "startedAt" | "comp
     icon: "Link",
   },
   {
+    id: "browser",
+    label: "Browser Health",
+    shortLabel: "BROWSER",
+    description: "Console errors • Failed requests • Mobile viewport • Browser compatibility checks",
+    icon: "Monitor",
+  },
+  {
     id: "seo",
     label: "Metadata",
     shortLabel: "METADATA",
@@ -107,24 +133,52 @@ export const PIPELINE_STAGES: Omit<PipelineStage, "status" | "startedAt" | "comp
   },
   {
     id: "forms",
-    label: "Forms",
+    label: "Form Structure",
     shortLabel: "FORMS",
     description: "Form detection • Input structure • Labels • Required fields • Action/method validation",
     icon: "ClipboardList",
   },
   {
-    id: "browser",
-    label: "Browser Health",
-    shortLabel: "BROWSER",
-    description: "Console errors • Failed requests • Mobile viewport • Browser compatibility checks",
-    icon: "Monitor",
+    id: "exposure",
+    label: "Route Exposure",
+    shortLabel: "EXPOSURE",
+    description: "Public route map • Admin/debug routes • Risk classification • Unintended exposure",
+    icon: "ShieldAlert",
   },
   {
-    id: "score",
-    label: "Indexing",
-    shortLabel: "INDEXING",
-    description: "Sitemap.xml • Robots.txt • Noindex status • Crawl hints • Discoverability",
-    icon: "Database",
+    id: "ai_leftovers",
+    label: "AI Leftovers",
+    shortLabel: "LEFTOVERS",
+    description: "Placeholder copy • Lorem ipsum • Template artifacts • AI-generated leftovers",
+    icon: "Bot",
+  },
+  {
+    id: "keys",
+    label: "Secret Scan",
+    shortLabel: "SECRETS",
+    description: "Exposed API keys • Firebase/Supabase config • Token patterns in page source",
+    icon: "KeyRound",
+  },
+  {
+    id: "form_analysis",
+    label: "Form Safety",
+    shortLabel: "FORM SAFETY",
+    description: "Validation coverage • Submission wiring • Accessibility of inputs • Risky form patterns",
+    icon: "ShieldCheck",
+  },
+  {
+    id: "security",
+    label: "Security Headers",
+    shortLabel: "SECURITY",
+    description: "CSP • HSTS • Clickjacking • Cookie flags • Mixed content • Source maps • Vulnerable libraries",
+    icon: "Lock",
+  },
+  {
+    id: "performance",
+    label: "Performance",
+    shortLabel: "PERFORMANCE",
+    description: "TTFB • HTML weight • Compression • Caching • Render-blocking scripts • Layout shift risk",
+    icon: "Gauge",
   },
   {
     id: "report",

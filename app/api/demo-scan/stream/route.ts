@@ -1,8 +1,23 @@
 import { NextResponse } from 'next/server';
+import { randomBytes } from 'crypto';
 import { z } from 'zod';
 import { runScan } from '@/lib/scanner';
 import type { ScanEvent } from '@/lib/scan-events';
 import { demoStorePut } from '@/lib/demo-scan-store';
+import { persistScanResult } from '@/lib/persistence';
+import { registerScan, isStopRequested, clearScan } from '@/lib/scan-control';
+import { checkQuota, consumeForScan } from '@/lib/credits';
+
+/** URL-safe public token for the certificate page (/r/[token]). */
+function makeShareToken(): string {
+  return randomBytes(12).toString('base64url');
+}
+
+function readCookie(header: string | null, name: string): string {
+  if (!header) return '';
+  const m = header.match(new RegExp(`(?:^|; )${name}=([^;]+)`));
+  return m ? decodeURIComponent(m[1]) : '';
+}
 
 const schema = z.object({
   url: z.string().url().or(z.string().min(3)),
@@ -14,58 +29,101 @@ function ndjsonLine(event: ScanEvent) {
 }
 
 export async function POST(request: Request) {
+  // Validate before opening the stream so bad input gets a real 400
+  // instead of a 200 stream that dies with a generic error.
+  let url: string;
+  let depth: 'quick' | 'standard';
+  try {
+    const body = await request.json();
+    ({ url, depth } = schema.parse(body));
+  } catch (error: any) {
+    const message =
+      error instanceof z.ZodError
+        ? 'Invalid scan request: provide a valid URL (e.g. https://example.com)'
+        : 'Invalid scan request body';
+    return NextResponse.json({ success: false, error: message }, { status: 400 });
+  }
+
+  // Quota / credits gate. In dev (no Supabase) this is a no-op; with billing
+  // configured it enforces plan depth + credit balance + the anonymous trial.
+  // TODO(auth): userId comes from the Supabase session once auth is wired.
+  const userId: string | null = null;
+  const deviceId = readCookie(request.headers.get('cookie'), 'vss_device');
+  const ip = (request.headers.get('x-forwarded-for') || '').split(',')[0].trim();
+  const quota = await checkQuota({ userId, deviceId, ip, depth, url });
+  if (!quota.ok) {
+    return NextResponse.json(
+      { success: false, error: quota.reason, code: quota.code, balance: quota.balance },
+      { status: 402 }
+    );
+  }
+
   const encoder = new TextEncoder();
 
   const stream = new ReadableStream<Uint8Array>({
     async start(controller) {
+      // The client can disconnect at any point; enqueue then throws.
+      // Track closure so a disconnect doesn't crash the scan mid-flight.
+      let closed = false;
+      const send = (event: ScanEvent) => {
+        if (closed) return;
+        try {
+          controller.enqueue(encoder.encode(ndjsonLine(event)));
+        } catch {
+          closed = true;
+        }
+      };
+      const close = () => {
+        if (closed) return;
+        closed = true;
+        try {
+          controller.close();
+        } catch {
+          // already closed by the runtime
+        }
+      };
+
+      const scanId = `demo-${Date.now()}`;
+      registerScan(scanId);
       try {
-        const body = await request.json();
-        const { url, depth } = schema.parse(body);
+        const shareToken = makeShareToken();
 
-        const scanId = `demo-${Date.now()}`;
+        // Announce the scanId first so the client can request a stop for it.
+        send({ type: 'scan_started', scanId });
 
-        const send = (event: ScanEvent) => controller.enqueue(encoder.encode(ndjsonLine(event)));
-
+        // Reserve the credit now that the scan is actually starting.
+        const charge = await consumeForScan({ userId, deviceId, ip, depth, url, scanId });
+        if (charge.freeRescan) {
+          send({ type: 'log', message: 'Free re-verify (scanned recently)', severity: 'info' });
+        } else if (charge.charged > 0) {
+          send({
+            type: 'log',
+            message: `${charge.charged} credit${charge.charged === 1 ? '' : 's'} used${charge.balance != null ? ` · ${charge.balance} left` : ''}`,
+            severity: 'info',
+          });
+        }
         send({ type: 'log', message: `Starting scan`, severity: 'info' });
 
         const result = await runScan(url, depth, {
-          onProgress: (evt) => {
-            if (evt.type === 'log') {
-              send({ type: 'log', message: evt.message || '', severity: evt.severity });
-              return;
-            }
-
-            if (evt.type === 'stage_start') {
-              send({ type: 'stage_start', stageId: evt.stageId || 'init', message: evt.message, metrics: evt.metrics });
-              return;
-            }
-
-            if (evt.type === 'stage_progress') {
-              send({ type: 'stage_progress', stageId: evt.stageId || 'init', message: evt.message, metrics: evt.metrics });
-              return;
-            }
-
-            if (evt.type === 'stage_end') {
-              send({
-                type: 'stage_end',
-                stageId: evt.stageId || 'init',
-                status: evt.status,
-                message: evt.message,
-                metrics: evt.metrics,
-              });
-            }
-          },
+          onProgress: (evt) => send(evt),
+          shouldStop: () => isStopRequested(scanId),
         });
 
         // Store full result server-side for report retrieval
         const scan = {
           id: scanId,
+          share_token: shareToken,
           target_url: url,
           scan_depth: depth,
-          status: 'completed',
+          status: result.partial ? 'stopped' : 'completed',
+          partial: result.partial ?? false,
+          stopped_at_stage: result.stoppedAtStage ?? null,
           launch_score: result.score,
           launch_readiness_score: result.launchReadiness?.launchReadinessScore,
           launch_decision: result.launchReadiness?.launchDecision,
+          certification_gate: result.certification?.gate,
+          overall_grade: result.certification?.overallGrade,
+          certification_json: result.certification,
           scan_coverage: result.launchReadiness?.scanCoverage,
           result_confidence: result.launchReadiness?.resultConfidence,
           target_fit: result.launchReadiness?.targetFit,
@@ -99,13 +157,41 @@ export async function POST(request: Request) {
 
         demoStorePut(scanId, scan, { ...result, scan });
 
-        send({ type: 'log', message: `Scan complete`, severity: 'success' });
+        // Durable persistence for the public certificate (/r/[token]).
+        // Never breaks the scan — degrades to the in-memory record.
+        try {
+          const { backend, ephemeral } = await persistScanResult({
+            scanId,
+            shareToken,
+            targetUrl: url,
+            scan,
+            result,
+          });
+          send({
+            type: 'log',
+            message:
+              backend === 'supabase'
+                ? 'Certificate saved (durable)'
+                : `Certificate saved (in-memory${ephemeral ? ', resets on restart' : ''})`,
+            severity: 'info',
+          });
+        } catch (err: any) {
+          send({ type: 'log', message: 'Certificate storage skipped', severity: 'warning' });
+        }
+
+        send({
+          type: 'log',
+          message: result.partial ? `Scan stopped — partial report ready` : `Scan complete`,
+          severity: result.partial ? 'warning' : 'success',
+        });
         send({ type: 'result', scanId });
-        controller.close();
+        close();
       } catch (error: any) {
         const message = error?.message || 'Failed to run scan';
-        controller.enqueue(encoder.encode(ndjsonLine({ type: 'log', message, severity: 'error' })));
-        controller.close();
+        send({ type: 'error', message });
+        close();
+      } finally {
+        clearScan(scanId);
       }
     },
   });
@@ -117,4 +203,3 @@ export async function POST(request: Request) {
     },
   });
 }
-

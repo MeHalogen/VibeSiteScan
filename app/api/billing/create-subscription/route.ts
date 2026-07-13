@@ -1,0 +1,50 @@
+import { NextResponse } from 'next/server';
+import { z } from 'zod';
+import { isRazorpayConfigured, createSubscription } from '@/lib/razorpay';
+import { getPlan } from '@/lib/plans';
+
+const schema = z.object({ planId: z.enum(['starter', 'agency']), userId: z.string().optional() });
+
+/** Create a Razorpay subscription for a monthly plan. */
+export async function POST(request: Request) {
+  if (!isRazorpayConfigured()) {
+    return NextResponse.json(
+      { success: false, error: 'Billing is not configured yet. Add Razorpay keys to enable subscriptions.' },
+      { status: 503 }
+    );
+  }
+
+  let planId: 'starter' | 'agency';
+  let userId: string | undefined;
+  try {
+    ({ planId, userId } = schema.parse(await request.json()));
+  } catch {
+    return NextResponse.json({ success: false, error: 'planId required' }, { status: 400 });
+  }
+
+  const plan = getPlan(planId);
+  const razorpayPlanId = plan.razorpayPlanEnv ? process.env[plan.razorpayPlanEnv] : undefined;
+  if (!razorpayPlanId) {
+    return NextResponse.json(
+      { success: false, error: `Razorpay plan id not set (${plan.razorpayPlanEnv}).` },
+      { status: 503 }
+    );
+  }
+
+  try {
+    const subscription = await createSubscription(razorpayPlanId, {
+      type: 'subscription',
+      planId: plan.id,
+      credits: String(plan.monthlyCredits),
+      userId: userId || '',
+    });
+    return NextResponse.json({
+      success: true,
+      subscription,
+      keyId: process.env.RAZORPAY_KEY_ID,
+      plan,
+    });
+  } catch (err: any) {
+    return NextResponse.json({ success: false, error: err.message }, { status: 502 });
+  }
+}

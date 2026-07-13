@@ -48,6 +48,12 @@ export interface PageData {
   formCount: number;
   wordCount?: number;
   pageSizeBytes?: number;
+  /** All response headers, lowercased keys. Empty when the fetch failed. */
+  responseHeaders?: Record<string, string>;
+  /** Individual Set-Cookie header values as delivered. */
+  setCookies?: string[];
+  /** Whether the request was redirected before reaching finalUrl. */
+  redirected?: boolean;
 }
 
 // Enhanced Link Check with full tracing
@@ -156,6 +162,11 @@ export interface ScanResult {
   issues: Issue[];
   score: number; // Legacy score for backwards compatibility
   launchReadiness?: LaunchReadinessScore; // Launch readiness scoring
+  certification?: any; // Certification (green-light gate + pillar grades)
+  /** True when the user stopped the scan before it finished. */
+  partial?: boolean;
+  /** Stage during which the user stopped, when partial. */
+  stoppedAtStage?: string;
   durationMs: number;
   consoleEvents: ConsoleEvent[];
   formChecks: FormCheck[];
@@ -169,6 +180,8 @@ export interface ScanResult {
   keyPatternFindings?: any[];    // KeyPatternFinding[]
   enhancedForms?: any[];         // DetectedForm[]
   formFindings?: any[];          // FormFinding[]
+  securityFindings?: any[];      // SecurityFinding[]
+  performanceFindings?: any[];   // PerformanceFinding[]
   fixPrompts?: any[];            // FixPrompt[]
   // Summary stats
   discoveredPagesCount: number;
