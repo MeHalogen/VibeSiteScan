@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { ScanConfig, ScanState, PIPELINE_STAGES } from "@/lib/scan-pipeline/types";
 import { PipelineOrchestrator, ScanStreamError } from "@/lib/scan-pipeline/orchestrator";
 import type { ScanEvent } from "@/lib/scan-events";
+import { getAccessToken } from "@/lib/supabase-browser";
 import { ScanConfigPanel } from "./ScanConfigPanel";
 import { PipelineView } from "./PipelineView";
 import { ScanCompleteSummary } from "./ScanCompleteSummary";
@@ -48,9 +49,15 @@ export function ScanInitializer() {
     try {
       const orchestrator = new PipelineOrchestrator();
 
+      // Attach the Supabase access token when signed in, so the scan is billed
+      // to the account (credits) rather than the anonymous trial.
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      const token = await getAccessToken();
+      if (token) headers["Authorization"] = `Bearer ${token}`;
+
       const response = await fetch("/api/demo-scan/stream", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers,
         signal: abort.signal,
         body: JSON.stringify({
           url: config.targetUrl,

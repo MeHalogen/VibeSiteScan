@@ -62,9 +62,9 @@ say "Certificate saved (durable)" instead of "in-memory".)
 
 Credits model (single source of truth: `lib/plans.ts`):
 - **Free** — 15 credits/mo · Quick + Launch checks
-- **Starter** — ₹799/mo · 250 credits · adds Deep checks
-- **Agency** — ₹1999/mo · 1000 credits · white-label + workspaces
-- **Top-up packs** (one-time, never expire): 75/₹199, 200/₹499, 500/₹999
+- **Pro** — ₹99/mo · 100 credits · adds Deep checks · PDF + history
+- **Studio** — ₹299/mo · 400 credits · white-label + client workspaces
+- **Top-up packs** (one-time, never expire): 60/₹49, 150/₹99, 350/₹199
 - A scan costs 1 (quick) / 2 (standard) / 5 (deep) credits. Re-scanning the same
   URL within 15 minutes is **free** (rewards the fix → re-verify loop).
 

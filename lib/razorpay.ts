@@ -3,7 +3,7 @@
  *
  * Keys live in the user's environment — the assistant never handles them:
  *   RAZORPAY_KEY_ID, RAZORPAY_KEY_SECRET, RAZORPAY_WEBHOOK_SECRET
- *   RAZORPAY_PLAN_STARTER, RAZORPAY_PLAN_AGENCY  (subscription plan ids)
+ *   RAZORPAY_PLAN_PRO, RAZORPAY_PLAN_STUDIO  (subscription plan ids)
  *
  * Until real keys are set, isRazorpayConfigured() is false and the billing
  * routes return a clear "not configured" response instead of pretending.

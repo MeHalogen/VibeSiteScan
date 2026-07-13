@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { isRazorpayConfigured, createOrder } from '@/lib/razorpay';
 import { getCreditPack } from '@/lib/plans';
+import { getUserFromRequest, ensureProfile } from '@/lib/auth-server';
 
-const schema = z.object({ packId: z.string(), userId: z.string().optional() });
+const schema = z.object({ packId: z.string() });
 
 /** Create a Razorpay order for a one-time credit top-up pack. */
 export async function POST(request: Request) {
@@ -14,10 +15,17 @@ export async function POST(request: Request) {
     );
   }
 
+  // Credit the signed-in account — userId comes from the token, not the body.
+  const user = await getUserFromRequest(request);
+  if (!user) {
+    return NextResponse.json({ success: false, error: 'Sign in to buy credits.', code: 'signin' }, { status: 401 });
+  }
+  await ensureProfile(user);
+  const userId = user.id;
+
   let packId: string;
-  let userId: string | undefined;
   try {
-    ({ packId, userId } = schema.parse(await request.json()));
+    ({ packId } = schema.parse(await request.json()));
   } catch {
     return NextResponse.json({ success: false, error: 'packId required' }, { status: 400 });
   }

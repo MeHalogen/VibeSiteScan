@@ -5,7 +5,7 @@ export const metadata = {
   title: 'Pricing — VibeSiteScan',
 };
 
-const ORDER: Array<keyof typeof PLANS> = ['free', 'starter', 'agency'];
+const ORDER: Array<keyof typeof PLANS> = ['free', 'pro', 'studio'];
 
 export default function PricingPage() {
   return (

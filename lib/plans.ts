@@ -6,7 +6,7 @@
  * Prices are in Indian rupees (INR), matching Razorpay.
  */
 
-export type PlanId = 'free' | 'starter' | 'agency';
+export type PlanId = 'free' | 'pro' | 'studio';
 export type ScanDepth = 'quick' | 'standard' | 'deep';
 
 /** Credits a scan costs, by depth. Cost tracks compute. */
@@ -50,32 +50,32 @@ export const PLANS: Record<PlanId, Plan> = {
       'Free re-verify within 15 min',
     ],
   },
-  starter: {
-    id: 'starter',
-    name: 'Starter',
-    priceInr: 799,
-    razorpayPlanEnv: 'RAZORPAY_PLAN_STARTER',
-    monthlyCredits: 250,
+  pro: {
+    id: 'pro',
+    name: 'Pro',
+    priceInr: 99,
+    razorpayPlanEnv: 'RAZORPAY_PLAN_PRO',
+    monthlyCredits: 100,
     allowedDepths: ['quick', 'standard', 'deep'],
     popular: true,
     features: [
-      '250 credits / month',
+      '100 credits / month',
       'Quick + Launch + Deep checks',
       'Scan history',
       'PDF export',
       'Priority scanning',
     ],
   },
-  agency: {
-    id: 'agency',
-    name: 'Agency',
-    priceInr: 1999,
-    razorpayPlanEnv: 'RAZORPAY_PLAN_AGENCY',
-    monthlyCredits: 1000,
+  studio: {
+    id: 'studio',
+    name: 'Studio',
+    priceInr: 299,
+    razorpayPlanEnv: 'RAZORPAY_PLAN_STUDIO',
+    monthlyCredits: 400,
     allowedDepths: ['quick', 'standard', 'deep'],
     features: [
-      '1000 credits / month',
-      'Everything in Starter',
+      '400 credits / month',
+      'Everything in Pro',
       'White-label certificates',
       'Client workspaces',
       'API access',
@@ -92,9 +92,9 @@ export interface CreditPack {
 }
 
 export const CREDIT_PACKS: CreditPack[] = [
-  { id: 'pack_75', name: 'Top-up 75', priceInr: 199, credits: 75 },
-  { id: 'pack_200', name: 'Top-up 200', priceInr: 499, credits: 200 },
-  { id: 'pack_500', name: 'Top-up 500', priceInr: 999, credits: 500 },
+  { id: 'pack_60', name: 'Top-up 60', priceInr: 49, credits: 60 },
+  { id: 'pack_150', name: 'Top-up 150', priceInr: 99, credits: 150 },
+  { id: 'pack_350', name: 'Top-up 350', priceInr: 199, credits: 350 },
 ];
 
 export function getPlan(planId: string | null | undefined): Plan {

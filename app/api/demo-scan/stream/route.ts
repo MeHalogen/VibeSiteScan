@@ -7,6 +7,7 @@ import { demoStorePut } from '@/lib/demo-scan-store';
 import { persistScanResult } from '@/lib/persistence';
 import { registerScan, isStopRequested, clearScan } from '@/lib/scan-control';
 import { checkQuota, consumeForScan } from '@/lib/credits';
+import { getUserFromRequest, ensureProfile } from '@/lib/auth-server';
 
 /** URL-safe public token for the certificate page (/r/[token]). */
 function makeShareToken(): string {
@@ -46,8 +47,10 @@ export async function POST(request: Request) {
 
   // Quota / credits gate. In dev (no Supabase) this is a no-op; with billing
   // configured it enforces plan depth + credit balance + the anonymous trial.
-  // TODO(auth): userId comes from the Supabase session once auth is wired.
-  const userId: string | null = null;
+  // Signed-in users are billed to their account; everyone else uses the anon trial.
+  const authedUser = await getUserFromRequest(request);
+  if (authedUser) await ensureProfile(authedUser);
+  const userId: string | null = authedUser?.id ?? null;
   const deviceId = readCookie(request.headers.get('cookie'), 'vss_device');
   const ip = (request.headers.get('x-forwarded-for') || '').split(',')[0].trim();
   const quota = await checkQuota({ userId, deviceId, ip, depth, url });

@@ -2,8 +2,9 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { isRazorpayConfigured, createSubscription } from '@/lib/razorpay';
 import { getPlan } from '@/lib/plans';
+import { getUserFromRequest, ensureProfile } from '@/lib/auth-server';
 
-const schema = z.object({ planId: z.enum(['starter', 'agency']), userId: z.string().optional() });
+const schema = z.object({ planId: z.enum(['pro', 'studio']) });
 
 /** Create a Razorpay subscription for a monthly plan. */
 export async function POST(request: Request) {
@@ -14,10 +15,17 @@ export async function POST(request: Request) {
     );
   }
 
-  let planId: 'starter' | 'agency';
-  let userId: string | undefined;
+  // Bill to the signed-in account — userId is taken from the token, never the body.
+  const user = await getUserFromRequest(request);
+  if (!user) {
+    return NextResponse.json({ success: false, error: 'Sign in to upgrade.', code: 'signin' }, { status: 401 });
+  }
+  await ensureProfile(user);
+  const userId = user.id;
+
+  let planId: 'pro' | 'studio';
   try {
-    ({ planId, userId } = schema.parse(await request.json()));
+    ({ planId } = schema.parse(await request.json()));
   } catch {
     return NextResponse.json({ success: false, error: 'planId required' }, { status: 400 });
   }
