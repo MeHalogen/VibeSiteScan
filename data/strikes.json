@@ -1,0 +1,43 @@
+{
+  "version": "1.1.0",
+  "created": "2026-07-07T21:47:53.961Z",
+  "lastUpdated": "2026-07-07T21:48:34.367Z",
+  "config": {
+    "aiModel": "gpt",
+    "severityThreshold": "medium"
+  },
+  "strikes": [
+    {
+      "category": "null_pointer",
+      "severity": "medium",
+      "description": "fix: resolve all TypeScript build errors - nocheck legacy, fix null narrowing, fix MapIterator, exclude tests",
+      "tags": [
+        "interactive"
+      ],
+      "resolved": false,
+      "source": {
+        "commit": "97c639e1d1c24e203ba35046395c51352fd51646",
+        "file": "app/dashboard/reports/pipeline-result/page.tsx",
+        "lines": [
+          1,
+          1
+        ],
+        "diff": "diff --git a/app/dashboard/reports/pipeline-result/page.tsx b/app/dashboard/reports/pipeline-result/page.tsx\nindex bff9df4..974f153 100644\n--- a/app/dashboard/reports/pipeline-result/page.tsx\n+++ b/app/dashboard/reports/pipeline-result/page.tsx\n@@ -22,7 +22,7 @@ export default function PipelineResultPage() {\n     async function load() {\n       try {\n         setLoading(true);\n-        const res = await fetch(`/api/demo-scan/result/${encodeURIComponent(scanId)}`);\n+        const res = await fetch(`/api/demo-scan/result/${encodeURIComponent(scanId!)}`);\n         if (!res.ok) throw new Error(\"Report not found\");\n         const data = await res.json();\n         if (!data.success) throw new Error(data.error || \"Report not found\");\n"
+      },
+      "id": "d9c2cc87-76e1-40fd-86c3-7495fdd1d761",
+      "timestamp": "2026-07-07T21:48:34.366Z"
+    }
+  ],
+  "statistics": {
+    "totalStrikes": 1,
+    "byCategory": {
+      "null_pointer": 1
+    },
+    "bySeverity": {
+      "low": 0,
+      "medium": 1,
+      "high": 0,
+      "critical": 0
+    }
+  }
+}

@@ -32,3 +32,15 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# local scratch / debug artifacts (never commit)
+lib/GY.HTML
+lib/mehal_debug.html
+lib/mehal_debug2.html
+lib/mehal_resume.html
+report.html
+lib/*.html
+
+# local agent config (keep launch.json shared, ignore local-only bits)
+.claude/settings.local.json
+.claude/worktrees/
