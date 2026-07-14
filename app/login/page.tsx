@@ -8,7 +8,27 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [message, setMessage] = useState('');
+  const [linkError, setLinkError] = useState('');
   const authOn = isAuthAvailable();
+
+  // Surface an expired/invalid magic-link error. It can arrive either as a
+  // ?authError query (routed here by AuthLanding) or directly as a #error hash
+  // (if Supabase's Site URL points at /login). Handle both.
+  useEffect(() => {
+    const q = new URLSearchParams(window.location.search).get('authError');
+    const h = window.location.hash.includes('error=')
+      ? new URLSearchParams(window.location.hash.replace(/^#/, '')).get('error_code')
+      : null;
+    const code = q || h;
+    if (!code) return;
+    setLinkError(
+      code === 'otp_expired'
+        ? 'That sign-in link expired or was already used. Enter your email below to get a fresh one.'
+        : 'That sign-in link was invalid. Enter your email below to get a new one.'
+    );
+    // Clean the URL so a refresh doesn't keep showing it.
+    window.history.replaceState({}, '', '/login');
+  }, []);
 
   // Where to land after sign-in (?next=/pricing?upgrade=pro), default dashboard.
   function nextPath(): string {
@@ -69,6 +89,12 @@ export default function LoginPage() {
               We&apos;ll email you a magic link — no password to remember.
             </p>
           </div>
+
+          {linkError && (
+            <div className="rounded-xl border border-amber-500/40 bg-amber-500/10 p-4 mb-4 text-center">
+              <p className="text-sm text-amber-300">{linkError}</p>
+            </div>
+          )}
 
           {!authOn ? (
             <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-5 text-center">
