@@ -122,6 +122,23 @@ export default function HomePage() {
     <div className="min-h-screen">
       <section className="bg-[#0a0e14] text-cream relative overflow-hidden scanline-overlay bg-coord-grid-dark">
 
+        {/* ── TOP NAV ── */}
+        <div className="relative z-20 border-b border-white/10 bg-black/50 backdrop-blur">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+            <Link href="/" className="font-semibold tracking-tight text-cream">VibeSiteScan</Link>
+            <nav className="flex items-center gap-4">
+              <Link href="/pricing" className="text-sm text-white/60 hover:text-white transition-colors">Pricing</Link>
+              <Link href="/login" className="text-sm text-white/70 hover:text-white transition-colors">Sign in</Link>
+              <Link
+                href="/dashboard/new-scan-pipeline"
+                className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-500 rounded-lg transition-colors"
+              >
+                Scan a site
+              </Link>
+            </nav>
+          </div>
+        </div>
+
         {/* ── TOP TICKER ── */}
         <div className="bg-black/70 border-b border-white/10 py-2 overflow-hidden">
           <motion.div

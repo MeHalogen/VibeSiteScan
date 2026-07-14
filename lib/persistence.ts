@@ -51,8 +51,14 @@ export function isSupabaseConfigured(): boolean {
   if (!url || !key) return false;
   if (url.includes('placeholder') || url.includes('example')) return false;
   try {
-    const host = new URL(url).host;
-    return host.endsWith('.supabase.co') || host.endsWith('.supabase.in');
+    const host = new URL(url).hostname;
+    // Accept hosted Supabase and a local dev stack (supabase start).
+    return (
+      host.endsWith('.supabase.co') ||
+      host.endsWith('.supabase.in') ||
+      host === '127.0.0.1' ||
+      host === 'localhost'
+    );
   } catch {
     return false;
   }

@@ -214,11 +214,13 @@ export function PipelineVerticalView({
         </div>
       </div>
 
-      {/* 3-column console */}
-      <div className="relative z-10 flex-1 grid grid-cols-1 md:grid-cols-[minmax(220px,1fr)_1.6fr_1.4fr] min-h-0">
+      {/* 3-column console.
+          Each column gets min-w-0 so a long log line can't blow the grid tracks
+          out of proportion (CSS grid children default to min-width:auto). */}
+      <div className="relative z-10 flex-1 grid grid-cols-1 md:grid-cols-[minmax(200px,0.9fr)_1.6fr_1.4fr] min-h-0">
 
         {/* LEFT — modules */}
-        <div className="hidden md:flex flex-col border-r border-white/10 bg-black/25 overflow-y-auto">
+        <div className="hidden md:flex flex-col border-r border-white/10 bg-black/25 overflow-y-auto min-w-0">
           <div className="flex items-center justify-between px-4 pt-4 pb-3 border-b border-white/10 sticky top-0 bg-black/40 backdrop-blur z-10">
             <span className="font-mono text-[11px] font-semibold tracking-widest uppercase text-white/80">Modules</span>
             <span className="font-mono text-[10px] text-white/40 tabular-nums">{completedCount}/{stages.length}</span>
@@ -237,7 +239,7 @@ export function PipelineVerticalView({
         </div>
 
         {/* CENTER — NOW SCANNING */}
-        <div className="flex flex-col border-r border-white/10 min-h-0 overflow-y-auto">
+        <div className="flex flex-col border-r border-white/10 min-h-0 min-w-0 overflow-y-auto">
           <div className="px-5 pt-4 pb-3 border-b border-white/10">
             <div className="font-mono text-[10px] uppercase tracking-widest text-white/40 mb-1">
               {isRunning ? 'Now scanning' : 'Selected module'}
@@ -262,11 +264,11 @@ export function PipelineVerticalView({
             <div className="font-mono text-[10px] uppercase tracking-widest text-white/40 mb-2">Evidence · {focusStage?.label?.toLowerCase()}</div>
             <div className="space-y-1">
               {(focusStage?.evidenceLog || []).slice(-40).map((l, i) => (
-                <div key={i} className="flex gap-2 font-mono text-[11px] leading-relaxed">
+                <div key={i} className="flex gap-2 font-mono text-[11px] leading-relaxed min-w-0">
                   <span className="text-white/25 tabular-nums shrink-0">
                     {l.timestamp.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                   </span>
-                  <span style={{ color: SEV_COLOR[l.severity] }}>{l.message}</span>
+                  <span className="min-w-0 break-all" style={{ color: SEV_COLOR[l.severity] }}>{l.message}</span>
                 </div>
               ))}
               {(!focusStage?.evidenceLog || focusStage.evidenceLog.length === 0) && (
@@ -308,7 +310,7 @@ export function PipelineVerticalView({
         </div>
 
         {/* RIGHT — live terminal feed (all stages) */}
-        <div className="hidden md:flex flex-col bg-black/40 min-h-0">
+        <div className="hidden md:flex flex-col bg-black/40 min-h-0 min-w-0">
           <div className="flex items-center gap-2 px-4 pt-4 pb-3 border-b border-white/10">
             <span className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
             <span className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
@@ -318,12 +320,12 @@ export function PipelineVerticalView({
           <div className="flex-1 overflow-y-auto px-4 py-3">
             <div className="flex flex-col gap-1">
               {allLogs.slice(-300).map((l, i) => (
-                <div key={i} className="flex gap-2 font-mono text-[10.5px] leading-relaxed">
+                <div key={i} className="flex gap-2 font-mono text-[10.5px] leading-relaxed min-w-0">
                   <span className="text-white/20 tabular-nums shrink-0">
                     {l.timestamp.toLocaleTimeString('en-US', { hour12: false, hour: '2-digit', minute: '2-digit', second: '2-digit' })}
                   </span>
                   {l.stageId && <span className="text-white/25 shrink-0 uppercase">[{l.stageId}]</span>}
-                  <span style={{ color: SEV_COLOR[l.severity] }}>{l.message}</span>
+                  <span className="min-w-0 break-all" style={{ color: SEV_COLOR[l.severity] }}>{l.message}</span>
                 </div>
               ))}
               <div ref={feedEndRef} />

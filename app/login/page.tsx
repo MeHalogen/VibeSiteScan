@@ -53,8 +53,10 @@ export default function LoginPage() {
       <div className="flex-1 flex items-center justify-center px-4">
         <div className="w-full max-w-sm">
           <div className="text-center mb-8">
-            <span className="classified-stamp text-[9px] text-white/45">Account access</span>
-            <h1 className="text-2xl font-bold text-white mt-4 mb-2">Sign in to VibeSiteScan</h1>
+            <div className="inline-flex items-center justify-center w-12 h-12 rounded-xl bg-emerald-500/10 border border-emerald-500/30 mb-4">
+              <span className="text-emerald-400 text-xl">✓</span>
+            </div>
+            <h1 className="text-2xl font-semibold text-white mb-2">Sign in to VibeSiteScan</h1>
             <p className="text-sm text-white/55">
               We&apos;ll email you a magic link — no password to remember.
             </p>
