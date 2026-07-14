@@ -135,6 +135,20 @@ NEXT_PUBLIC_APP_URL             = https://vibesitescan.pro
    create accounts with zero email, turn **OFF** "Confirm email" under
    **Authentication → Providers → Email**. (Leave it ON for production if you want
    verified emails; magic-link + SMTP already handles that.)
+5. **Google sign-in (recommended — one click, no email, no rate limits)**:
+   - **Google Cloud Console** (console.cloud.google.com) → APIs & Services →
+     **Credentials** → **Create Credentials → OAuth client ID** → type **Web
+     application**. Under **Authorized redirect URIs** add your Supabase callback:
+     `https://kenbajfrbzzryfudlgpg.supabase.co/auth/v1/callback`
+     (copy the exact value from Supabase → Providers → Google → "Callback URL").
+     Create it → copy the **Client ID** and **Client secret**.
+   - **Supabase → Authentication → Providers → Google** → enable → paste the
+     Client ID + Client secret → Save.
+   - In **Vercel env vars**, set `NEXT_PUBLIC_GOOGLE_AUTH=true` and redeploy —
+     this reveals the "Continue with Google" button on `/login`. (It stays hidden
+     until then so users never hit a "provider not enabled" error.)
+   - Done. It uses `signInWithOAuth`; after Google the user is redirected back and
+     the app's `AuthLanding` handler completes the session — no extra code.
 
 ### 3d. Razorpay (Test mode first)
 Vercel env vars:
