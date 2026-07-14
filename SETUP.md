@@ -44,6 +44,7 @@ Supabase → **SQL Editor** → paste and run each file **in order**:
 1. `supabase/migrations/001_init.sql`  — scans, issues, profiles, RLS
 2. `supabase/migrations/002_certification.sql` — certificate columns
 3. `supabase/migrations/003_credits.sql` — credits balance, transactions, `consume_credits`/`grant_credits` functions
+4. `supabase/migrations/004_grants.sql` — **required** — grants the API roles access to the tables/functions (without it every profiles/credits query fails with "permission denied")
 
 (Or use the Supabase CLI: `supabase db push`.)
 
@@ -75,8 +76,8 @@ Razorpay Dashboard → **Settings → API Keys → Generate Test Key**:
 
 ### 2b. Create the subscription plans
 Dashboard → **Subscriptions → Plans → Create Plan**. Make two monthly plans:
-- Starter: ₹799 / month → copy its `plan_...` id → `RAZORPAY_PLAN_STARTER`
-- Agency: ₹1999 / month → copy its `plan_...` id → `RAZORPAY_PLAN_AGENCY`
+- Pro: ₹99 / month → copy its `plan_...` id → `RAZORPAY_PLAN_PRO`
+- Studio: ₹299 / month → copy its `plan_...` id → `RAZORPAY_PLAN_STUDIO`
 
 (Credit top-up packs need **no** plan — they use one-time Orders, created from
 `CREDIT_PACKS` in `lib/plans.ts`.)
@@ -93,20 +94,20 @@ updates the plan via the Supabase `grant_credits` function. Unsigned or
 mis-signed calls are rejected.
 
 ### 2d. Verify (test mode)
-- Hit `POST /api/billing/create-subscription` with `{ "planId": "starter" }` —
-  with keys set it returns a Razorpay subscription; without keys it returns a
-  clear "Billing is not configured yet."
-- Use a Razorpay **test card** to complete a checkout, then confirm the webhook
-  fired and the user's credits/plan updated in Supabase.
+- On `/pricing`, click **Choose Pro** → you're sent to the dashboard, which opens
+  the Razorpay Checkout modal (sign in first if prompted). Pay with a Razorpay
+  **test card**, then confirm the webhook fired and the user's credits/plan
+  updated (dashboard credits jump; `profiles.plan` = `pro`).
+- Also set `NEXT_PUBLIC_RAZORPAY_KEY_ID` (same as `RAZORPAY_KEY_ID`) so the
+  client checkout can initialize.
 
 ### 2e. Go live
 Swap Test keys for **Live** keys, recreate the plans in Live mode, update the
 webhook to the live secret, and set `NEXT_PUBLIC_APP_URL` to your real domain.
 
-> Note: the billing **backend** (subscription/order creation + webhook credit
-> grants) is complete. The pricing page currently shows plans and explains the
-> model; wiring the "Upgrade" button to open the Razorpay Checkout modal on the
-> client is the one remaining front-end piece before you can take payments in the UI.
+> The billing flow is **complete end-to-end**: pricing → checkout modal →
+> Razorpay → webhook → credits granted (verified against a local Supabase +
+> signed test webhooks). You only need to plug in your own keys.
 
 ---
 
@@ -125,7 +126,7 @@ webhook to the live secret, and set `NEXT_PUBLIC_APP_URL` to your real domain.
 | Service   | Required for                    | Env vars |
 |-----------|---------------------------------|----------|
 | Supabase  | accounts, durable certs, credits| `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY` |
-| Razorpay  | paid plans + top-ups            | `RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`, `RAZORPAY_PLAN_STARTER`, `RAZORPAY_PLAN_AGENCY` |
+| Razorpay  | paid plans + top-ups            | `RAZORPAY_KEY_ID`, `NEXT_PUBLIC_RAZORPAY_KEY_ID`, `RAZORPAY_KEY_SECRET`, `RAZORPAY_WEBHOOK_SECRET`, `RAZORPAY_PLAN_PRO`, `RAZORPAY_PLAN_STUDIO` |
 | App       | cert links + badge              | `NEXT_PUBLIC_APP_URL` |
 
 Nothing else. No third service is required.
