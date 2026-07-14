@@ -59,7 +59,14 @@ export default function LoginPage() {
     });
     if (error) {
       setStatus('error');
-      setMessage(error.message);
+      const raw = (error.message || '').toLowerCase();
+      if (raw.includes('rate limit') || raw.includes('too many') || (error as any).status === 429) {
+        setMessage(
+          'Too many sign-in emails for now. Wait a minute and try once more — or, if this keeps happening, the email limit was reached (set up custom SMTP in Supabase for production).'
+        );
+      } else {
+        setMessage(error.message);
+      }
     } else {
       setStatus('sent');
     }
