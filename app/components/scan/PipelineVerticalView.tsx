@@ -176,7 +176,7 @@ export function PipelineVerticalView({
         : 'Standby';
 
   return (
-    <div className="min-h-screen bg-[#0a0e14] text-cream relative overflow-hidden scanline-overlay bg-coord-grid-dark flex flex-col">
+    <div className="h-screen bg-[#0a0e14] text-cream relative overflow-hidden scanline-overlay bg-coord-grid-dark flex flex-col">
       {/* Corner labels */}
       <span className="absolute top-2 left-3 font-mono text-[9px] text-white/20 z-20">STATUS: {isRunning ? 'SCANNING' : 'ONLINE'}</span>
       <span className="absolute top-2 right-3 font-mono text-[9px] text-white/20 z-20">LAUNCH GATE</span>

@@ -101,6 +101,19 @@ export function AccountBar() {
   // Auth not configured → keep the dashboard clean, no account chrome.
   if (!authOn || (me && !me.configured)) return null;
 
+  // Still loading /api/me → show a skeleton so credits don't flash 0 → real,
+  // and the guest state doesn't briefly appear for signed-in users.
+  if (!me) {
+    return (
+      <div className="rounded-xl border border-white/10 bg-black/30 p-4 mb-6 flex items-center gap-4 animate-pulse">
+        <div className="h-8 w-16 rounded bg-white/10" />
+        <div className="h-8 w-px bg-white/10" />
+        <div className="h-8 w-24 rounded bg-white/10" />
+        <div className="ml-auto h-8 w-40 rounded bg-white/10" />
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-xl border border-white/10 bg-black/30 p-4 mb-6 flex flex-wrap items-center justify-between gap-3">
       {me?.authed ? (

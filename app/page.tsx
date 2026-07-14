@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { useEffect, useRef, useState } from 'react';
 import { ScanInitializer } from "@/app/components/scan/ScanInitializer";
+import { NavAccount } from "@/app/components/NavAccount";
 
 const SCAN_LOGS = [
   { t: "14:23:01", msg: "SCAN INITIATED — my-saas.vercel.app", ok: true },
@@ -128,7 +129,7 @@ export default function HomePage() {
             <Link href="/" className="font-semibold tracking-tight text-cream">VibeSiteScan</Link>
             <nav className="flex items-center gap-4">
               <Link href="/pricing" className="text-sm text-white/60 hover:text-white transition-colors">Pricing</Link>
-              <Link href="/login" className="text-sm text-white/70 hover:text-white transition-colors">Sign in</Link>
+              <NavAccount />
               <Link
                 href="/dashboard/new-scan-pipeline"
                 className="px-4 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-500 rounded-lg transition-colors"

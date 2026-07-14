@@ -12,6 +12,7 @@ import {
   Copy,
 } from "lucide-react";
 import Link from "next/link";
+import { NavAccount } from "@/app/components/NavAccount";
 
 interface ScanConfigPanelProps {
   onStartScan: (config: ScanConfig) => void;
@@ -217,13 +218,7 @@ Site URL: <PASTE_YOUR_URL_HERE>`;
             >
               Pricing
             </Link>
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center gap-2 px-3 py-2 font-mono text-xs tracking-wide transition-colors"
-              style={{ border: "1px solid rgba(255,255,255,0.18)", background: "rgba(255,255,255,0.05)", color: "rgba(240,244,255,0.80)" }}
-            >
-              Dashboard / Sign in
-            </Link>
+            <NavAccount />
           </nav>
         </header>
 

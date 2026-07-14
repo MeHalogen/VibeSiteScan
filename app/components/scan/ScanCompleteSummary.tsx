@@ -287,13 +287,14 @@ export function ScanCompleteSummary({
                 <GateIcon className={`w-14 h-14 ${gateCfg.color}`} />
               </div>
               <div className="flex-1 min-w-0">
-                <div className="classified-stamp mb-2 inline-block" style={{ borderColor: 'currentColor' }}>
-                  <span className={gateCfg.color}>{gateCfg.stamp}</span>
-                </div>
-                <h1 className={`text-3xl md:text-4xl font-bold font-mono tracking-wide ${gateCfg.color}`}>
+                <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 mb-3 text-[10px] font-mono uppercase tracking-widest border ${gateCfg.border} ${gateCfg.color}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${gate === 'pass' ? 'bg-emerald-400' : gate === 'fail' ? 'bg-red-400' : gate === 'conditional' ? 'bg-amber-400' : 'bg-slate-400'}`} />
+                  {gateCfg.stamp}
+                </span>
+                <h1 className={`text-3xl md:text-4xl font-bold tracking-tight ${gateCfg.color}`}>
                   {gateCfg.label}
                 </h1>
-                <p className="text-secondary mt-2">{gateCfg.blurb}</p>
+                <p className="text-secondary mt-2 text-lg">{gateCfg.blurb}</p>
                 {Array.isArray(certification.reasons) && certification.reasons.length > 0 && (
                   <ul className="mt-3 space-y-1">
                     {certification.reasons.map((r: string, i: number) => (
@@ -341,31 +342,19 @@ export function ScanCompleteSummary({
           </motion.div>
         )}
 
-        {/* Status Badge & Hero Header */}
-        <div className="text-center mb-12">
-          <div className="inline-block mb-6">
-            <div 
-              className="classified-stamp mb-4" 
-              style={{borderColor: decisionConfig.stampColor, color: decisionConfig.stampColor}}
-            >
-              {isDiagnosticOnly ? 'DIAGNOSTIC COMPLETE' : 'SCAN COMPLETE'}
+        {/* The certification slab above is the single headline verdict — no second
+            redundant hero. Fallback heading only when there is no certification. */}
+        {!certification && (
+          <div className="text-center mb-12">
+            <div className={`inline-flex p-4 rounded-full ${decisionConfig.bg} border ${decisionConfig.border} mb-4`}>
+              <DecisionIcon className={`w-14 h-14 ${decisionConfig.color}`} />
             </div>
-            <div className={`inline-flex p-4 rounded-full ${decisionConfig.bg} border ${decisionConfig.border}`}>
-              <DecisionIcon className={`w-16 h-16 ${decisionConfig.color}`} />
-            </div>
+            <h1 className={`text-3xl font-bold mb-3 ${decisionConfig.color} tracking-tight`}>
+              {decisionConfig.label}
+            </h1>
+            <p className="text-secondary text-lg max-w-2xl mx-auto">{decisionConfig.message}</p>
           </div>
-          <h1 className={`text-4xl font-bold mb-3 ${decisionConfig.color} font-mono tracking-wide`}>
-            {decisionConfig.label}
-          </h1>
-          <p className="text-secondary text-lg max-w-2xl mx-auto mb-3">
-            {decisionConfig.message}
-          </p>
-          {isDiagnosticOnly && (
-            <p className="text-tertiary text-sm max-w-2xl mx-auto">
-              This does not mean the site is poor quality. It means this scan is only a limited public launch-hygiene diagnostic.
-            </p>
-          )}
-        </div>
+        )}
 
         {/* Diagnostic Only Explanation Banner */}
         {isDiagnosticOnly && targetFit === 'limited' && (
