@@ -10,12 +10,20 @@ export default function LoginPage() {
   const [message, setMessage] = useState('');
   const authOn = isAuthAvailable();
 
-  // If already signed in, bounce to the dashboard.
+  // Where to land after sign-in (?next=/pricing?upgrade=pro), default dashboard.
+  function nextPath(): string {
+    if (typeof window === 'undefined') return '/dashboard';
+    const n = new URLSearchParams(window.location.search).get('next');
+    // Only allow same-origin relative paths.
+    return n && n.startsWith('/') ? n : '/dashboard';
+  }
+
+  // If already signed in, bounce onward.
   useEffect(() => {
     const sb = getBrowserSupabase();
     if (!sb) return;
     sb.auth.getSession().then(({ data }) => {
-      if (data.session) window.location.href = '/dashboard';
+      if (data.session) window.location.href = nextPath();
     });
   }, []);
 
@@ -27,7 +35,7 @@ export default function LoginPage() {
     setMessage('');
     const { error } = await sb.auth.signInWithOtp({
       email: email.trim(),
-      options: { emailRedirectTo: `${window.location.origin}/dashboard` },
+      options: { emailRedirectTo: `${window.location.origin}${nextPath()}` },
     });
     if (error) {
       setStatus('error');

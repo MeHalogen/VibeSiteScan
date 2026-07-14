@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { PLANS, CREDIT_PACKS, CREDIT_COST } from '@/lib/plans';
+import { PlanCta, PackCta } from './CheckoutCta';
 
 export const metadata = {
   title: 'Pricing — VibeSiteScan',
@@ -66,16 +67,20 @@ export default function PricingPage() {
                     </li>
                   ))}
                 </ul>
-                <Link
-                  href={plan.id === 'free' ? '/dashboard/new-scan-pipeline' : `/dashboard?upgrade=${plan.id}`}
-                  className={`block w-full text-center px-6 py-3 rounded-lg font-mono text-xs uppercase tracking-widest transition-colors ${
-                    plan.popular
-                      ? 'bg-emerald-600 hover:bg-emerald-500 text-white'
-                      : 'border border-white/15 text-white/85 hover:bg-white/5'
-                  }`}
-                >
-                  {plan.id === 'free' ? 'Start free' : 'Choose ' + plan.name}
-                </Link>
+                {plan.id === 'free' ? (
+                  <Link
+                    href="/dashboard/new-scan-pipeline"
+                    className="block w-full text-center px-6 py-3 rounded-lg font-mono text-xs uppercase tracking-widest transition-colors border border-white/15 text-white/85 hover:bg-white/5"
+                  >
+                    Start free
+                  </Link>
+                ) : (
+                  <PlanCta
+                    planId={plan.id as 'pro' | 'studio'}
+                    label={'Choose ' + plan.name}
+                    popular={plan.popular}
+                  />
+                )}
               </div>
             );
           })}
@@ -92,12 +97,7 @@ export default function PricingPage() {
                 <div className="font-mono text-2xl font-bold text-white">+{pack.credits}</div>
                 <div className="font-mono text-[11px] text-white/40 mb-3">credits</div>
                 <div className="font-mono text-lg text-emerald-400 mb-3">₹{pack.priceInr}</div>
-                <Link
-                  href={`/dashboard?topup=${pack.id}`}
-                  className="block w-full text-center px-4 py-2 rounded-lg border border-white/15 text-white/85 hover:bg-white/5 font-mono text-[11px] uppercase tracking-widest"
-                >
-                  Buy
-                </Link>
+                <PackCta packId={pack.id} label="Buy" />
               </div>
             ))}
           </div>
