@@ -79,6 +79,25 @@ export function AccountBar() {
     await refresh();
   }
 
+  async function cancelPlan() {
+    if (!window.confirm('Cancel your plan? You keep access until the end of the current billing cycle.')) return;
+    setBusy(true);
+    setNotice('');
+    try {
+      const token = await getAccessToken();
+      const res = await fetch('/api/billing/cancel-subscription', {
+        method: 'POST',
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      const data = await res.json();
+      setNotice(data.success ? data.message : data.error || 'Could not cancel.');
+    } catch {
+      setNotice('Could not cancel right now.');
+    } finally {
+      setBusy(false);
+    }
+  }
+
   // Auth not configured → keep the dashboard clean, no account chrome.
   if (!authOn || (me && !me.configured)) return null;
 
@@ -117,6 +136,15 @@ export function AccountBar() {
             >
               Buy credits
             </button>
+            {me.plan?.id && me.plan.id !== 'free' && (
+              <button
+                onClick={cancelPlan}
+                disabled={busy}
+                className="px-3 py-2 text-white/45 hover:text-red-400 font-mono text-[11px] uppercase tracking-widest disabled:opacity-50"
+              >
+                Cancel plan
+              </button>
+            )}
             <button
               onClick={signOut}
               className="px-3 py-2 text-white/45 hover:text-white font-mono text-[11px] uppercase tracking-widest"

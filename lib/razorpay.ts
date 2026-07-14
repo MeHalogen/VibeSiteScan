@@ -54,6 +54,16 @@ export async function createSubscription(planId: string, notes: Record<string, s
 }
 
 /**
+ * Cancel a subscription. `cancelAtCycleEnd: true` keeps access until the paid
+ * period ends (kinder default); false cancels immediately.
+ */
+export async function cancelSubscription(subscriptionId: string, cancelAtCycleEnd = true) {
+  return rzp(`/subscriptions/${subscriptionId}/cancel`, {
+    cancel_at_cycle_end: cancelAtCycleEnd ? 1 : 0,
+  });
+}
+
+/**
  * Verify a Razorpay webhook signature (HMAC-SHA256 of the raw body with the
  * webhook secret). Constant-time compare.
  */

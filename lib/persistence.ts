@@ -15,6 +15,7 @@
  */
 
 import { supabaseAdmin } from '@/lib/supabase';
+import { demoStoreGet } from '@/lib/demo-scan-store';
 
 export type PersistBackend = 'supabase' | 'memory';
 
@@ -158,6 +159,53 @@ export async function getScanByToken(token: string): Promise<PersistedCertificat
   return certStore.get(token)?.data ?? null;
 }
 
+/**
+ * Resolve a full scan report by the streaming scan id (e.g. demo-1784...).
+ * In-memory fast path first, then Supabase (durable — required on serverless,
+ * where the in-memory store is per-lambda and usually empty).
+ */
+export async function getReportByScanId(
+  scanId: string
+): Promise<{ scan: any; result: any } | null> {
+  const mem = demoStoreGet(scanId);
+  if (mem) return { scan: mem.scan, result: mem.result };
+
+  if (isSupabaseConfigured()) {
+    try {
+      const { data: scan } = await supabaseAdmin
+        .from('scans')
+        .select('*')
+        .eq('demo_scan_id', scanId)
+        .maybeSingle();
+      if (scan) {
+        const result = scan.report_json || {};
+        // Re-attach the certification so the report/summary can read it.
+        if (scan.certification_json && !result.certification) {
+          result.certification = scan.certification_json;
+        }
+        // Provide the flat fields the summary/report expect.
+        const flatScan = {
+          id: scanId,
+          share_token: scan.share_token,
+          target_url: scan.target_url,
+          launch_readiness_score: result?.launchReadiness?.launchReadinessScore,
+          launch_decision: result?.launchReadiness?.launchDecision,
+          scan_coverage: scan.scan_coverage,
+          result_confidence: scan.result_confidence,
+          target_fit: result?.launchReadiness?.targetFit,
+          certification_gate: scan.certification_gate,
+          overall_grade: scan.overall_grade,
+        };
+        return { scan: flatScan, result };
+      }
+    } catch (err) {
+      console.error('[persistence] getReportByScanId Supabase read failed:', err);
+    }
+  }
+
+  return null;
+}
+
 // ── Supabase implementation ──────────────────────────────────────────────────
 
 async function writeToSupabase(input: PersistInput): Promise<void> {
@@ -187,10 +235,11 @@ async function writeToSupabase(input: PersistInput): Promise<void> {
       scan_coverage: lr?.scanCoverage ?? null,
       result_confidence: lr?.resultConfidence ?? null,
       certification_json: cert ?? null,
-      report_json: {
-        launchReadiness: lr ?? null,
-        rootUrl: result?.rootUrl ?? targetUrl,
-      },
+      demo_scan_id: input.scanId,
+      // The full report the "Open full report" page needs, minus the heavy
+      // per-page HTML. launchReadiness stays at the top level so the certificate
+      // read path keeps working.
+      report_json: trimResultForStorage(result),
     })
     .select('id')
     .single();
@@ -212,6 +261,23 @@ async function writeToSupabase(input: PersistInput): Promise<void> {
     const { error: issuesError } = await supabaseAdmin.from('scan_issues').insert(rows);
     if (issuesError) throw issuesError;
   }
+}
+
+/**
+ * Strip the biggest fields (per-page raw HTML) so the report JSON stays well
+ * under Postgres/JSONB limits. The report UI never reads page.html.
+ */
+function trimResultForStorage(result: any): any {
+  if (!result) return null;
+  return {
+    ...result,
+    pages: Array.isArray(result.pages)
+      ? result.pages.map((p: any) => {
+          const { html, responseHeaders, ...rest } = p;
+          return rest;
+        })
+      : result.pages,
+  };
 }
 
 async function readFromSupabase(token: string): Promise<PersistedCertificate | null> {

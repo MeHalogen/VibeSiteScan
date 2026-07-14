@@ -274,14 +274,42 @@ function calculateScore(
   const needsFix = enhancedIssues.filter(i => i.displaySeverity === 'needs_fix' && i.affectsReadiness);
   const polish = enhancedIssues.filter(i => i.displaySeverity === 'polish' && i.affectsReadiness);
   const potential = enhancedIssues.filter(i => i.evidenceStatus === 'potential');
-  
-  const blockerPenalty = blockers.reduce((sum, i) => sum + i.scoringPenalty, 0);
-  const needsFixPenalty = needsFix.reduce((sum, i) => sum + i.scoringPenalty, 0);
-  const polishPenalty = polish.reduce((sum, i) => sum + i.scoringPenalty, 0);
-  const potentialPenalty = potential.reduce((sum, i) => sum + i.scoringPenalty, 0);
-  
+
+  // Group by DISTINCT problem type. A single problem repeated across many pages
+  // (e.g. every page missing a meta description) is ONE thing to fix — it must
+  // not be penalized once per page, or a fixable site floors at 0/100.
+  // Each distinct type counts once, plus a small, capped breadth bump.
+  const effectiveCount = (issues: EnhancedIssue[]): number => {
+    const byCode = new Map<string, number>();
+    for (const i of issues) {
+      const key = (i as any).issue_code || (i as any).issueCode || i.message || 'unknown';
+      byCode.set(key, (byCode.get(key) || 0) + 1);
+    }
+    let eff = 0;
+    for (const count of Array.from(byCode.values())) {
+      eff += Math.min(1 + (count - 1) * 0.1, 1.6);
+    }
+    return eff;
+  };
+
+  const blockerEff = effectiveCount(blockers);
+  const needsFixEff = effectiveCount(needsFix);
+  const polishEff = effectiveCount(polish);
+  const potentialEff = effectiveCount(potential);
+
+  // Blockers are serious → near-linear, each distinct blocker costs a lot.
+  // Warnings/polish/potential SATURATE so a pile of minor issues can't alone
+  // drive the score to 0; the curve maps "some" → 70s, "many" → 50s-60s.
+  const blockerPenalty = Math.round(blockerEff * 25);
+  const needsFixPenalty = Math.round(45 * (1 - Math.exp(-needsFixEff / 6)));
+  const polishPenalty = Math.round(10 * (1 - Math.exp(-polishEff / 5)));
+  const potentialPenalty = Math.round(15 * (1 - Math.exp(-potentialEff / 6)));
+
   const totalPenalty = blockerPenalty + needsFixPenalty + polishPenalty + potentialPenalty;
-  const finalScore = Math.max(0, Math.min(100, 100 - totalPenalty));
+  let finalScore = Math.max(0, Math.min(100, 100 - totalPenalty));
+  // Keep the number consistent with the verdict: a real blocker means "do not
+  // ship", so the score should read like it (never a comfortable pass).
+  if (blockers.length > 0) finalScore = Math.min(finalScore, 45);
   
   const skippedCount = enhancedIssues.filter(i => i.evidenceStatus === 'skipped').length;
   const notCapturedCount = enhancedIssues.filter(i => i.evidenceStatus === 'not_captured').length;

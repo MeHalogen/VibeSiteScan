@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { use } from 'react';
+import { getAccessToken } from '@/lib/supabase-browser';
 
 interface Scan {
   id: string;
@@ -33,9 +34,21 @@ export default function ScanReportPage({ params }: { params: Promise<{ id: strin
   const [loading, setLoading] = useState(true);
   const [filter, setFilter] = useState<'all' | 'critical' | 'warning'>('all');
   const [shareUrl, setShareUrl] = useState('');
+  const [plan, setPlan] = useState<string>('free');
 
   useEffect(() => {
     fetchScanData();
+    // PDF export is a Pro feature — learn the viewer's plan.
+    (async () => {
+      try {
+        const token = await getAccessToken();
+        const res = await fetch('/api/me', { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+        const me = await res.json();
+        if (me?.plan?.id) setPlan(me.plan.id);
+      } catch {
+        /* stays free */
+      }
+    })();
   }, [resolvedParams.id]);
 
   async function fetchScanData() {
@@ -78,6 +91,13 @@ export default function ScanReportPage({ params }: { params: Promise<{ id: strin
   }
 
   async function exportPdf() {
+    // PDF export is a Pro/Studio feature.
+    if (plan === 'free') {
+      if (window.confirm('PDF export is a Pro feature. Upgrade to Pro (₹99/mo) to download branded reports?')) {
+        window.location.href = '/pricing?upgrade=pro';
+      }
+      return;
+    }
     try {
       const jsPDF = (await import('jspdf')).jsPDF;
       const doc = new jsPDF();
@@ -147,7 +167,7 @@ export default function ScanReportPage({ params }: { params: Promise<{ id: strin
               onClick={exportPdf}
               className="px-4 py-2 text-sm font-medium text-slate-700 dark:text-slate-300 bg-white dark:bg-slate-700 border border-slate-300 dark:border-slate-600 rounded-lg hover:bg-slate-50 dark:hover:bg-slate-600"
             >
-              Export PDF
+              Export PDF{plan === 'free' ? ' · Pro' : ''}
             </button>
             <a
               href={`/api/reports/${resolvedParams.id}/csv`}
