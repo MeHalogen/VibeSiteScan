@@ -4,16 +4,19 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { getBrowserSupabase, isAuthAvailable } from '@/lib/supabase-browser';
 
+type Mode = 'magic' | 'password';
+
 export default function LoginPage() {
+  const [mode, setMode] = useState<Mode>('magic');
   const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
   const [status, setStatus] = useState<'idle' | 'sending' | 'sent' | 'error'>('idle');
   const [message, setMessage] = useState('');
   const [linkError, setLinkError] = useState('');
   const authOn = isAuthAvailable();
 
   // Surface an expired/invalid magic-link error. It can arrive either as a
-  // ?authError query (routed here by AuthLanding) or directly as a #error hash
-  // (if Supabase's Site URL points at /login). Handle both.
+  // ?authError query (routed here by AuthLanding) or directly as a #error hash.
   useEffect(() => {
     const q = new URLSearchParams(window.location.search).get('authError');
     const h = window.location.hash.includes('error=')
@@ -26,15 +29,12 @@ export default function LoginPage() {
         ? 'That sign-in link expired or was already used. Enter your email below to get a fresh one.'
         : 'That sign-in link was invalid. Enter your email below to get a new one.'
     );
-    // Clean the URL so a refresh doesn't keep showing it.
     window.history.replaceState({}, '', '/login');
   }, []);
 
-  // Where to land after sign-in (?next=/pricing?upgrade=pro), default dashboard.
   function nextPath(): string {
     if (typeof window === 'undefined') return '/dashboard';
     const n = new URLSearchParams(window.location.search).get('next');
-    // Only allow same-origin relative paths.
     return n && n.startsWith('/') ? n : '/dashboard';
   }
 
@@ -46,6 +46,16 @@ export default function LoginPage() {
       if (data.session) window.location.href = nextPath();
     });
   }, []);
+
+  function friendly(err: { message?: string; status?: number }): string {
+    const raw = (err.message || '').toLowerCase();
+    if (raw.includes('rate limit') || raw.includes('too many') || err.status === 429) {
+      return 'Too many sign-in emails for now. Wait a minute and try once more — or set up custom SMTP in Supabase (see FLOW.md).';
+    }
+    if (raw.includes('invalid login credentials')) return 'Wrong email or password.';
+    if (raw.includes('already registered')) return 'That email already has an account — use "Sign in" instead.';
+    return err.message || 'Something went wrong.';
+  }
 
   async function sendLink(e: React.FormEvent) {
     e.preventDefault();
@@ -59,18 +69,54 @@ export default function LoginPage() {
     });
     if (error) {
       setStatus('error');
-      const raw = (error.message || '').toLowerCase();
-      if (raw.includes('rate limit') || raw.includes('too many') || (error as any).status === 429) {
-        setMessage(
-          'Too many sign-in emails for now. Wait a minute and try once more — or, if this keeps happening, the email limit was reached (set up custom SMTP in Supabase for production).'
-        );
-      } else {
-        setMessage(error.message);
-      }
+      setMessage(friendly(error));
     } else {
       setStatus('sent');
     }
   }
+
+  async function passwordSignIn(e: React.FormEvent) {
+    e.preventDefault();
+    const sb = getBrowserSupabase();
+    if (!sb) return;
+    setStatus('sending');
+    setMessage('');
+    const { error } = await sb.auth.signInWithPassword({ email: email.trim(), password });
+    if (error) {
+      setStatus('error');
+      setMessage(friendly(error));
+    } else {
+      window.location.href = nextPath();
+    }
+  }
+
+  async function passwordSignUp() {
+    const sb = getBrowserSupabase();
+    if (!sb) return;
+    if (password.length < 6) {
+      setStatus('error');
+      setMessage('Choose a password of at least 6 characters.');
+      return;
+    }
+    setStatus('sending');
+    setMessage('');
+    const { data, error } = await sb.auth.signUp({ email: email.trim(), password });
+    if (error) {
+      setStatus('error');
+      setMessage(friendly(error));
+    } else if (data.session) {
+      // Email confirmation is off → signed in immediately.
+      window.location.href = nextPath();
+    } else {
+      // Confirmation on → a confirm email was sent.
+      setStatus('sent');
+    }
+  }
+
+  const inputClass =
+    'w-full px-4 py-3 rounded-lg bg-black/40 border border-white/15 text-white placeholder-white/30 font-mono text-sm focus:outline-none focus:border-emerald-500/60';
+  const primaryBtn =
+    'w-full px-4 py-3 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white font-mono text-xs uppercase tracking-widest rounded-lg transition-colors';
 
   return (
     <div className="min-h-screen bg-[#0a0e14] text-cream scanline-overlay bg-coord-grid-dark flex flex-col">
@@ -93,7 +139,9 @@ export default function LoginPage() {
             </div>
             <h1 className="text-2xl font-semibold text-white mb-2">Sign in to VibeSiteScan</h1>
             <p className="text-sm text-white/55">
-              We&apos;ll email you a magic link — no password to remember.
+              {mode === 'magic'
+                ? "We'll email you a magic link — no password to remember."
+                : 'Use your email and a password.'}
             </p>
           </div>
 
@@ -105,9 +153,7 @@ export default function LoginPage() {
 
           {!authOn ? (
             <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-5 text-center">
-              <p className="text-sm text-amber-300/90 font-mono">
-                Sign-in isn&apos;t configured yet.
-              </p>
+              <p className="text-sm text-amber-300/90 font-mono">Sign-in isn&apos;t configured yet.</p>
               <p className="text-xs text-white/50 mt-2">
                 Add your Supabase keys (see SETUP.md) to enable accounts. You can still run free
                 scans without signing in.
@@ -124,11 +170,11 @@ export default function LoginPage() {
               <div className="text-3xl mb-3">📨</div>
               <p className="text-sm text-white font-medium mb-1">Check your inbox</p>
               <p className="text-xs text-white/55">
-                We sent a sign-in link to <span className="text-emerald-400">{email}</span>. Open it
-                on this device to continue.
+                We sent an email to <span className="text-emerald-400">{email}</span>. Open it on
+                this device to continue.
               </p>
             </div>
-          ) : (
+          ) : mode === 'magic' ? (
             <form onSubmit={sendLink} className="space-y-3">
               <input
                 type="email"
@@ -136,18 +182,53 @@ export default function LoginPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder="you@example.com"
-                className="w-full px-4 py-3 rounded-lg bg-black/40 border border-white/15 text-white placeholder-white/30 font-mono text-sm focus:outline-none focus:border-emerald-500/60"
+                className={inputClass}
               />
-              <button
-                type="submit"
-                disabled={status === 'sending'}
-                className="w-full px-4 py-3 bg-emerald-600 hover:bg-emerald-500 disabled:opacity-60 text-white font-mono text-xs uppercase tracking-widest rounded-lg transition-colors"
-              >
+              <button type="submit" disabled={status === 'sending'} className={primaryBtn}>
                 {status === 'sending' ? 'Sending…' : 'Email me a magic link'}
               </button>
-              {status === 'error' && (
-                <p className="text-xs text-red-400 font-mono text-center">{message}</p>
-              )}
+              {status === 'error' && <p className="text-xs text-red-400 font-mono text-center">{message}</p>}
+              <p className="text-center text-xs text-white/40 pt-1">
+                <button type="button" onClick={() => { setMode('password'); setStatus('idle'); setMessage(''); }} className="text-emerald-400/80 hover:text-emerald-300 underline">
+                  Use a password instead
+                </button>
+              </p>
+            </form>
+          ) : (
+            <form onSubmit={passwordSignIn} className="space-y-3">
+              <input
+                type="email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                className={inputClass}
+              />
+              <input
+                type="password"
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Password"
+                className={inputClass}
+              />
+              <button type="submit" disabled={status === 'sending'} className={primaryBtn}>
+                {status === 'sending' ? 'Signing in…' : 'Sign in'}
+              </button>
+              <button
+                type="button"
+                onClick={passwordSignUp}
+                disabled={status === 'sending'}
+                className="w-full px-4 py-3 border border-white/15 hover:bg-white/5 disabled:opacity-60 text-white/85 font-mono text-xs uppercase tracking-widest rounded-lg transition-colors"
+              >
+                Create account
+              </button>
+              {status === 'error' && <p className="text-xs text-red-400 font-mono text-center">{message}</p>}
+              <p className="text-center text-xs text-white/40 pt-1">
+                <button type="button" onClick={() => { setMode('magic'); setStatus('idle'); setMessage(''); }} className="text-emerald-400/80 hover:text-emerald-300 underline">
+                  Email me a magic link instead
+                </button>
+              </p>
             </form>
           )}
 

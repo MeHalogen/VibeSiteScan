@@ -9,13 +9,18 @@ found".
 
 ## 0. Which auth did I put in?
 
-**Supabase Auth, email magic-link (passwordless OTP).** No passwords, no Google/
-GitHub OAuth (those can be added later in the Supabase dashboard with no code
-change). Concretely:
+**Supabase Auth.** Two ways to sign in on `/login`, no OAuth (Google/GitHub can
+be added later in the Supabase dashboard with no code change):
 
-- **Sign-in** (`/login`): user types their email → Supabase emails a magic link →
-  clicking it signs them in. Implemented with `supabase.auth.signInWithOtp()`
-  (`app/login/page.tsx`).
+1. **Email magic-link (default, passwordless)** — `supabase.auth.signInWithOtp()`.
+2. **Email + password (fallback)** — `signInWithPassword()` / `signUp()`. Use
+   this to test without depending on email at all (see §3c about turning off
+   "Confirm email" so password sign-up is instant).
+
+Concretely:
+
+- **Sign-in** (`/login`): magic link by default; "Use a password instead" toggles
+  to the password form (`app/login/page.tsx`).
 - **Session**: lives in the browser (localStorage), auto-refreshed by
   `@supabase/supabase-js` (`lib/supabase-browser.ts`). **No cookies / no
   middleware** — deliberately simple and serverless-friendly.
@@ -113,8 +118,23 @@ NEXT_PUBLIC_APP_URL             = https://vibesitescan.pro
   credits/profile query fails with "permission denied" (this was a real bug).
 - **005_report_lookup.sql** lets the full report resolve durably by scan id.
 
-### 3c. Enable Email auth
-Supabase → **Authentication → Providers → Email** → on.
+### 3c. Enable Email auth (+ URL config, SMTP, password option)
+1. **Enable email**: Supabase → **Authentication → Providers → Email** → on.
+2. **URL config** (critical — otherwise magic links redirect to `localhost`):
+   Supabase → **Authentication → URL Configuration**:
+   - **Site URL**: `https://vibesitescan.pro`
+   - **Redirect URLs**: add `https://vibesitescan.pro/**` (and `http://localhost:3000/**` if you also test locally).
+3. **Custom SMTP (required before real launch)**: the built-in Supabase email
+   sender is throttled to ~3–4 emails/hour and will fail for real users. Connect
+   a provider — **Resend** is easiest (free 3,000/mo):
+   - resend.com → create an API key (and optionally verify your domain).
+   - Supabase → **Authentication → Emails → SMTP Settings → Enable Custom SMTP**:
+     Host `smtp.resend.com`, Port `465`, User `resend`, Password = Resend API key,
+     Sender `noreply@vibesitescan.pro`, Sender name `VibeSiteScan`.
+4. **Optional — instant password sign-up for testing**: to let the password form
+   create accounts with zero email, turn **OFF** "Confirm email" under
+   **Authentication → Providers → Email**. (Leave it ON for production if you want
+   verified emails; magic-link + SMTP already handles that.)
 
 ### 3d. Razorpay (Test mode first)
 Vercel env vars:
