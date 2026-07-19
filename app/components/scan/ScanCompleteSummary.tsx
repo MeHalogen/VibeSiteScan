@@ -57,6 +57,9 @@ export function ScanCompleteSummary({
   const targetFitReason = result?.target_fit_reason;
   const scoreMode = result?.score_mode;
 
+  // Certification (the green-light slab) — single source of truth from the engine
+  const certification = result?.certification_json || result?.certification;
+
   // Error state
   if (error) {
     return (
@@ -96,6 +99,72 @@ export function ScanCompleteSummary({
               <RotateCcw className="w-5 h-5" />
               RETRY SCAN
             </button>
+            {onViewPipeline && (
+              <button
+                onClick={onViewPipeline}
+                className="flex items-center justify-center gap-2 px-6 py-3 intel-panel-dark hover:bg-slate-700 text-primary font-bold rounded-lg transition-all font-mono border border-blue-500/30"
+              >
+                <TrendingUp className="w-5 h-5" />
+                VIEW PIPELINE
+              </button>
+            )}
+            <button
+              onClick={onReset}
+              className="flex items-center justify-center gap-2 px-6 py-3 intel-panel-dark hover:bg-slate-700 text-primary font-bold rounded-lg transition-all font-mono"
+            >
+              CONFIGURE NEW SCAN
+            </button>
+          </div>
+        </div>
+      </motion.div>
+    );
+  }
+
+  // The scan finished but the stored report could not be retrieved
+  // (server restart, expired store). Say so — never render a summary
+  // built from missing data.
+  if (result?.report_unavailable) {
+    return (
+      <motion.div
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        exit={{ opacity: 0 }}
+        className="launch-console scanline-overlay min-h-screen py-12"
+      >
+        <div className="container mx-auto px-4 max-w-4xl">
+          <div className="text-center mb-8">
+            <div className="inline-block mb-6">
+              <div className="classified-stamp mb-4" style={{ borderColor: '#f59e0b', color: '#f59e0b' }}>
+                REPORT UNAVAILABLE
+              </div>
+              <div className="inline-flex p-4 rounded-full bg-amber-500/10 border border-amber-500/30">
+                <AlertTriangle className="w-16 h-16 text-amber-400" />
+              </div>
+            </div>
+            <h1 className="text-4xl font-bold text-amber-400 mb-2 font-mono">SCAN FINISHED — REPORT LOST</h1>
+            <p className="text-secondary max-w-2xl mx-auto">
+              The scan completed, but the report could not be retrieved from the server.
+              This usually means the server restarted or the result expired. Run the scan again to get a fresh report.
+            </p>
+          </div>
+
+          <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <button
+              onClick={onRetry}
+              className="flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-emerald-600 to-green-700 hover:from-emerald-500 hover:to-green-600 text-white font-bold rounded-lg transition-all font-mono"
+            >
+              <RotateCcw className="w-5 h-5" />
+              RUN SCAN AGAIN
+            </button>
+            {onViewPipeline && (
+              <button
+                onClick={onViewPipeline}
+                className="flex items-center justify-center gap-2 px-6 py-3 intel-panel-dark hover:bg-slate-700 text-primary font-bold rounded-lg transition-all font-mono border border-blue-500/30"
+              >
+                <TrendingUp className="w-5 h-5" />
+                VIEW PIPELINE
+              </button>
+            )}
             <button
               onClick={onReset}
               className="flex items-center justify-center gap-2 px-6 py-3 intel-panel-dark hover:bg-slate-700 text-primary font-bold rounded-lg transition-all font-mono"
@@ -156,9 +225,11 @@ export function ScanCompleteSummary({
           border: 'border-blue-500/30',
           stampColor: '#3b82f6',
           label: 'Diagnostic Report Only',
+          // Say why the decision is withheld — target fit and low coverage are
+          // different reasons and must not be conflated.
           message: isLimitedFit
             ? 'This site is outside our ideal target. We checked what we could, but we are not assigning a share-readiness decision.'
-            : 'This scan could not verify enough of the checklist to assign a share-readiness decision. Verified findings are shown below.',
+            : 'We could not verify enough of the checklist to responsibly assign a share-readiness decision. See coverage below.',
         };
       default:
         return {
@@ -176,6 +247,28 @@ export function ScanCompleteSummary({
   const decisionConfig = getLaunchDecisionConfig();
   const DecisionIcon = decisionConfig.icon;
 
+  // ── Certification slab visual config ──
+  const GATE_CONFIG: Record<string, { label: string; stamp: string; color: string; bg: string; border: string; Icon: any; blurb: string }> = {
+    pass: { label: 'VibeSiteScan Verified', stamp: 'GREEN LIGHT', color: 'text-emerald-400', bg: 'bg-emerald-500/10', border: 'border-emerald-500/40', Icon: CheckCircle2, blurb: 'Security-clean and launch-ready.' },
+    conditional: { label: 'Conditional', stamp: 'AMBER', color: 'text-amber-400', bg: 'bg-amber-500/10', border: 'border-amber-500/40', Icon: AlertTriangle, blurb: 'Scanned successfully — fix the flagged items before you rely on the stamp.' },
+    fail: { label: 'Not Verified', stamp: 'BLOCKED', color: 'text-red-400', bg: 'bg-red-500/10', border: 'border-red-500/40', Icon: XCircle, blurb: 'Launch blockers found. Fix these before shipping.' },
+    unverified: { label: 'Unverified', stamp: 'INSUFFICIENT COVERAGE', color: 'text-slate-300', bg: 'bg-slate-500/10', border: 'border-slate-500/40', Icon: Info, blurb: 'We could not verify enough of the site to issue a verdict.' },
+  };
+  const gate: string = certification?.gate || 'unverified';
+  const gateCfg = GATE_CONFIG[gate] || GATE_CONFIG.unverified;
+  const GateIcon = gateCfg.Icon;
+
+  const gradeColor = (g: string | null): string => {
+    switch (g) {
+      case 'A': return 'text-emerald-400';
+      case 'B': return 'text-lime-400';
+      case 'C': return 'text-amber-400';
+      case 'D': return 'text-orange-400';
+      case 'F': return 'text-red-400';
+      default: return 'text-slate-500';
+    }
+  };
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -184,31 +277,86 @@ export function ScanCompleteSummary({
       className="launch-console scanline-overlay min-h-screen py-12"
     >
       <div className="container mx-auto px-4 max-w-6xl">
-        {/* Status Badge & Hero Header */}
-        <div className="text-center mb-12">
-          <div className="inline-block mb-6">
-            <div 
-              className="classified-stamp mb-4" 
-              style={{borderColor: decisionConfig.stampColor, color: decisionConfig.stampColor}}
-            >
-              {isDiagnosticOnly ? 'DIAGNOSTIC COMPLETE' : 'SCAN COMPLETE'}
+        {/* ── Certification slab (the headline verdict) ── */}
+        {certification && (
+          <motion.div
+            initial={{ opacity: 0, y: 12 }}
+            animate={{ opacity: 1, y: 0 }}
+            className={`mb-10 rounded-2xl border ${gateCfg.border} ${gateCfg.bg} p-8`}
+          >
+            <div className="flex flex-col md:flex-row md:items-center gap-6">
+              <div className={`inline-flex p-4 rounded-2xl ${gateCfg.bg} border ${gateCfg.border} shrink-0`}>
+                <GateIcon className={`w-14 h-14 ${gateCfg.color}`} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <span className={`inline-flex items-center gap-2 rounded-full px-3 py-1 mb-3 text-[10px] font-mono uppercase tracking-widest border ${gateCfg.border} ${gateCfg.color}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${gate === 'pass' ? 'bg-emerald-400' : gate === 'fail' ? 'bg-red-400' : gate === 'conditional' ? 'bg-amber-400' : 'bg-slate-400'}`} />
+                  {gateCfg.stamp}
+                </span>
+                <h1 className={`text-3xl md:text-4xl font-bold tracking-tight ${gateCfg.color}`}>
+                  {gateCfg.label}
+                </h1>
+                <p className="text-secondary mt-2 text-lg">{gateCfg.blurb}</p>
+                {Array.isArray(certification.reasons) && certification.reasons.length > 0 && (
+                  <ul className="mt-3 space-y-1">
+                    {certification.reasons.map((r: string, i: number) => (
+                      <li key={i} className="text-tertiary text-sm flex items-start gap-2">
+                        <span className={gateCfg.color}>•</span>
+                        <span>{r}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+              </div>
+              {certification.overallGrade && (
+                <div className="text-center shrink-0 px-4">
+                  <div className={`text-7xl font-bold font-mono ${gradeColor(certification.overallGrade)}`}>
+                    {certification.overallGrade}
+                  </div>
+                  <div className="text-tertiary text-xs font-mono uppercase tracking-widest mt-1">Overall grade</div>
+                </div>
+              )}
             </div>
-            <div className={`inline-flex p-4 rounded-full ${decisionConfig.bg} border ${decisionConfig.border}`}>
-              <DecisionIcon className={`w-16 h-16 ${decisionConfig.color}`} />
+
+            {/* Per-pillar grades — nothing hides in an average */}
+            {Array.isArray(certification.pillars) && certification.pillars.length > 0 && (
+              <div className="mt-8 grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-3">
+                {certification.pillars.map((p: any) => (
+                  <div key={p.key} className="intel-panel-dark rounded-xl p-3 text-center border border-white/5">
+                    <div className={`text-3xl font-bold font-mono ${gradeColor(p.grade)}`}>
+                      {p.grade || '—'}
+                    </div>
+                    <div className="text-[11px] text-secondary font-mono uppercase tracking-wide mt-1 leading-tight">
+                      {p.label}
+                    </div>
+                    {(p.blockers > 0 || p.warnings > 0) && (
+                      <div className="text-[10px] text-tertiary mt-1">
+                        {p.blockers > 0 ? `${p.blockers} critical` : `${p.warnings} to fix`}
+                      </div>
+                    )}
+                    {p.grade === null && (
+                      <div className="text-[10px] text-slate-500 mt-1">n/a</div>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </motion.div>
+        )}
+
+        {/* The certification slab above is the single headline verdict — no second
+            redundant hero. Fallback heading only when there is no certification. */}
+        {!certification && (
+          <div className="text-center mb-12">
+            <div className={`inline-flex p-4 rounded-full ${decisionConfig.bg} border ${decisionConfig.border} mb-4`}>
+              <DecisionIcon className={`w-14 h-14 ${decisionConfig.color}`} />
             </div>
+            <h1 className={`text-3xl font-bold mb-3 ${decisionConfig.color} tracking-tight`}>
+              {decisionConfig.label}
+            </h1>
+            <p className="text-secondary text-lg max-w-2xl mx-auto">{decisionConfig.message}</p>
           </div>
-          <h1 className={`text-4xl font-bold mb-3 ${decisionConfig.color} font-mono tracking-wide`}>
-            {decisionConfig.label}
-          </h1>
-          <p className="text-secondary text-lg max-w-2xl mx-auto mb-3">
-            {decisionConfig.message}
-          </p>
-          {isDiagnosticOnly && (
-            <p className="text-tertiary text-sm max-w-2xl mx-auto">
-              This does not mean the site is poor quality. It means this scan is only a limited public launch-hygiene diagnostic.
-            </p>
-          )}
-        </div>
+        )}
 
         {/* Diagnostic Only Explanation Banner (low coverage / limited confidence) */}
         {isDiagnosticOnly && !isLimitedFit && (
@@ -607,6 +755,17 @@ export function ScanCompleteSummary({
             >
               <FileText className="w-5 h-5" />
               OPEN FULL REPORT
+            </button>
+          )}
+          {result?.share_token && (
+            <button
+              onClick={() => {
+                window.open(`/r/${result.share_token}`, '_blank');
+              }}
+              className="flex items-center justify-center gap-2 px-8 py-4 intel-panel-dark hover:bg-slate-700 text-primary font-bold rounded-lg transition-all font-mono border border-emerald-500/30"
+            >
+              <Shield className="w-5 h-5" />
+              PUBLIC CERTIFICATE
             </button>
           )}
           {onViewPipeline && (

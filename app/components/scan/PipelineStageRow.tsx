@@ -6,7 +6,7 @@ interface PipelineStageRowProps {
   stage: {
     id: string;
     label: string;
-    status: 'idle' | 'running' | 'completed' | 'warning' | 'failed';
+    status: 'idle' | 'running' | 'completed' | 'warning' | 'failed' | 'skipped';
     startedAt?: Date;
     completedAt?: Date;
     badge?: string;
@@ -86,7 +86,7 @@ export function PipelineStageRow({ stage, isActive, onClick, showConnector = tru
         );
       case 'failed':
         return (
-          <div 
+          <div
             className="stage-icon-failed"
             style={{
               width: '16px',
@@ -102,6 +102,26 @@ export function PipelineStageRow({ stage, isActive, onClick, showConnector = tru
             }}
           >
             ✗
+          </div>
+        );
+      case 'skipped':
+        return (
+          <div
+            className="stage-icon-skipped"
+            style={{
+              width: '16px',
+              height: '16px',
+              borderRadius: '50%',
+              border: '1.5px dashed rgba(255,255,255,0.30)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              color: 'rgba(255,255,255,0.40)',
+              fontSize: '10px',
+              fontWeight: 700,
+            }}
+          >
+            –
           </div>
         );
     }
@@ -130,6 +150,11 @@ export function PipelineStageRow({ stage, isActive, onClick, showConnector = tru
           backgroundColor: `rgba(226,75,74,0.2)`,
           color: colors.red,
         };
+      case 'skipped':
+        return {
+          backgroundColor: 'rgba(255,255,255,0.06)',
+          color: 'rgba(240,244,255,0.45)',
+        };
       default:
         return null;
     }
@@ -148,6 +173,8 @@ export function PipelineStageRow({ stage, isActive, onClick, showConnector = tru
   const getStageName = () => {
     if (stage.status === 'idle') {
       return 'rgba(240,244,255,0.25)';
+    } else if (stage.status === 'skipped') {
+      return 'rgba(240,244,255,0.35)';
     } else if (stage.status === 'completed') {
       return 'rgba(240,244,255,0.45)';
     } else {

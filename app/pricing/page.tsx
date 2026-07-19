@@ -1,131 +1,111 @@
 import Link from 'next/link';
+import { PLANS, CREDIT_PACKS, CREDIT_COST } from '@/lib/plans';
+import { PlanCta, PackCta } from './CheckoutCta';
+
+export const metadata = {
+  title: 'Pricing — VibeSiteScan',
+};
+
+const ORDER: Array<keyof typeof PLANS> = ['free', 'pro', 'studio'];
 
 export default function PricingPage() {
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-50 to-blue-50 dark:from-slate-900 dark:to-slate-800">
-      {/* Header */}
-      <header className="border-b bg-white/50 dark:bg-slate-900/50 backdrop-blur-sm">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-2">
-            <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center">
-              <span className="text-white font-bold text-lg">L</span>
-            </div>
-            <span className="text-xl font-bold">VibeSiteScan</span>
+    <div className="min-h-screen bg-[#0a0e14] text-cream scanline-overlay bg-coord-grid-dark">
+      <header className="border-b border-white/10 bg-black/50">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 py-4 flex items-center justify-between">
+          <Link href="/" className="font-mono text-sm font-semibold tracking-widest uppercase text-white/85">
+            VibeSiteScan
           </Link>
-          <Link href="/dashboard" className="px-4 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
-            Dashboard
+          <Link
+            href="/dashboard/new-scan-pipeline"
+            className="px-4 py-2 text-xs font-mono uppercase tracking-widest text-white bg-emerald-600 hover:bg-emerald-500 rounded"
+          >
+            Scan a site
           </Link>
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-20">
-        <div className="text-center mb-16">
-          <h1 className="text-4xl font-bold mb-4">Simple, Transparent Pricing</h1>
-          <p className="text-xl text-slate-600 dark:text-slate-300">
-            Choose the plan that fits your needs
-          </p>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-16">
+        <div className="text-center mb-4">
+          <span className="classified-stamp text-[9px] text-white/45">Pay per site check</span>
+        </div>
+        <h1 className="text-4xl font-bold text-center mb-3 text-white">Credits, not surprises</h1>
+        <p className="text-center text-white/60 mb-3 max-w-2xl mx-auto">
+          One credit = one site check. Quick = {CREDIT_COST.quick}, Launch = {CREDIT_COST.standard}, Deep = {CREDIT_COST.deep}.
+          Re-verifying the same URL within 15 minutes is always free.
+        </p>
+
+        {/* Plans */}
+        <div className="grid md:grid-cols-3 gap-6 mt-12">
+          {ORDER.map((id) => {
+            const plan = PLANS[id];
+            return (
+              <div
+                key={plan.id}
+                className={`relative rounded-2xl p-7 border bg-black/30 ${
+                  plan.popular ? 'border-emerald-500/50' : 'border-white/10'
+                }`}
+              >
+                {plan.popular && (
+                  <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-3 py-0.5 bg-emerald-600 text-white text-[10px] font-mono uppercase tracking-widest rounded-full">
+                    Popular
+                  </div>
+                )}
+                <h3 className="text-xl font-bold mb-1 text-white">{plan.name}</h3>
+                <div className="text-3xl font-bold mb-1 font-mono text-white">
+                  ₹{plan.priceInr}
+                  <span className="text-sm text-white/40">{plan.priceInr > 0 ? '/mo' : ''}</span>
+                </div>
+                <div className="font-mono text-[11px] text-emerald-400/80 mb-5">
+                  {plan.monthlyCredits} credits / month
+                </div>
+                <ul className="space-y-2 mb-6">
+                  {plan.features.map((f) => (
+                    <li key={f} className="flex items-start gap-2 text-sm text-white/75">
+                      <span className="text-emerald-400 mt-0.5">✓</span>
+                      {f}
+                    </li>
+                  ))}
+                </ul>
+                {plan.id === 'free' ? (
+                  <Link
+                    href="/dashboard/new-scan-pipeline"
+                    className="block w-full text-center px-6 py-3 rounded-lg font-mono text-xs uppercase tracking-widest transition-colors border border-white/15 text-white/85 hover:bg-white/5"
+                  >
+                    Start free
+                  </Link>
+                ) : (
+                  <PlanCta
+                    planId={plan.id as 'pro' | 'studio'}
+                    label={'Choose ' + plan.name}
+                    popular={plan.popular}
+                  />
+                )}
+              </div>
+            );
+          })}
         </div>
 
-        <div className="grid md:grid-cols-3 gap-8 max-w-6xl mx-auto">
-          {/* Free */}
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border-2 border-slate-200 dark:border-slate-700">
-            <h3 className="text-2xl font-bold mb-2">Free</h3>
-            <div className="text-4xl font-bold mb-6">₹0<span className="text-lg text-slate-500">/month</span></div>
-            <ul className="space-y-3 mb-8">
-              <li className="flex items-start gap-2">
-                <span className="text-green-500 mt-1">✓</span>
-                <span>3 scans per month</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-green-500 mt-1">✓</span>
-                <span>Quick scan (homepage only)</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-green-500 mt-1">✓</span>
-                <span>Basic report</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-green-500 mt-1">✓</span>
-                <span>VibeSiteScan branding</span>
-              </li>
-            </ul>
-            <Link
-              href="/dashboard/new-scan"
-              className="block w-full px-6 py-3 text-center font-medium text-slate-700 bg-slate-100 rounded-lg hover:bg-slate-200"
-            >
-              Get Started
-            </Link>
-          </div>
-
-          {/* Starter */}
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border-2 border-blue-600 relative">
-            <div className="absolute -top-4 left-1/2 -translate-x-1/2 px-4 py-1 bg-blue-600 text-white text-sm font-medium rounded-full">
-              Popular
-            </div>
-            <h3 className="text-2xl font-bold mb-2">Starter</h3>
-            <div className="text-4xl font-bold mb-6">₹799<span className="text-lg text-slate-500">/month</span></div>
-            <ul className="space-y-3 mb-8">
-              <li className="flex items-start gap-2">
-                <span className="text-green-500 mt-1">✓</span>
-                <span>100 scans per month</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-green-500 mt-1">✓</span>
-                <span>Standard scan (up to 25 pages)</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-green-500 mt-1">✓</span>
-                <span>PDF export</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-green-500 mt-1">✓</span>
-                <span>Scan history</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-green-500 mt-1">✓</span>
-                <span>Email support</span>
-              </li>
-            </ul>
-            <button className="block w-full px-6 py-3 text-center font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
-              Coming Soon
-            </button>
-          </div>
-
-          {/* Agency */}
-          <div className="bg-white dark:bg-slate-800 rounded-2xl p-8 border-2 border-slate-200 dark:border-slate-700">
-            <h3 className="text-2xl font-bold mb-2">Agency</h3>
-            <div className="text-4xl font-bold mb-6">₹1,999<span className="text-lg text-slate-500">/month</span></div>
-            <ul className="space-y-3 mb-8">
-              <li className="flex items-start gap-2">
-                <span className="text-green-500 mt-1">✓</span>
-                <span>500 scans per month</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-green-500 mt-1">✓</span>
-                <span>Deep scan (up to 100 pages)</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-green-500 mt-1">✓</span>
-                <span>White-label reports</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-green-500 mt-1">✓</span>
-                <span>Client workspaces</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-green-500 mt-1">✓</span>
-                <span>CSV export</span>
-              </li>
-              <li className="flex items-start gap-2">
-                <span className="text-green-500 mt-1">✓</span>
-                <span>Priority support</span>
-              </li>
-            </ul>
-            <button className="block w-full px-6 py-3 text-center font-medium text-white bg-slate-600 rounded-lg hover:bg-slate-700">
-              Coming Soon
-            </button>
+        {/* Top-up packs */}
+        <div className="mt-16">
+          <h2 className="text-center font-mono text-xs uppercase tracking-widest text-white/50 mb-6">
+            Need more? One-time top-ups (never expire)
+          </h2>
+          <div className="grid sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
+            {CREDIT_PACKS.map((pack) => (
+              <div key={pack.id} className="rounded-xl p-5 border border-white/10 bg-black/20 text-center">
+                <div className="font-mono text-2xl font-bold text-white">+{pack.credits}</div>
+                <div className="font-mono text-[11px] text-white/40 mb-3">credits</div>
+                <div className="font-mono text-lg text-emerald-400 mb-3">₹{pack.priceInr}</div>
+                <PackCta packId={pack.id} label="Buy" />
+              </div>
+            ))}
           </div>
         </div>
+
+        <p className="text-center text-white/35 text-xs font-mono mt-12">
+          Payments via Razorpay. A green light means the site passed every security check we run.
+        </p>
       </div>
     </div>
   );

@@ -12,6 +12,7 @@ import {
   Copy,
 } from "lucide-react";
 import Link from "next/link";
+import { NavAccount } from "@/app/components/NavAccount";
 
 interface ScanConfigPanelProps {
   onStartScan: (config: ScanConfig) => void;
@@ -36,7 +37,6 @@ export function ScanConfigPanel({ onStartScan }: ScanConfigPanelProps) {
       setIsValidUrl(false);
       return;
     }
-    
     try {
       const normalized = url.startsWith("http") ? url : `https://${url}`;
       new URL(normalized);
@@ -53,9 +53,7 @@ export function ScanConfigPanel({ onStartScan }: ScanConfigPanelProps) {
       setUrlError("Target URL required");
       return;
     }
-    
     if (urlError) return;
-
     onStartScan({
       targetUrl: targetUrl.startsWith("http") ? targetUrl : `https://${targetUrl}`,
       scanMode,
@@ -71,6 +69,7 @@ export function ScanConfigPanel({ onStartScan }: ScanConfigPanelProps) {
 
   const tierCards: Array<{
     id: ScanMode;
+    label: string;
     title: string;
     subtitle: string;
     details: string;
@@ -80,6 +79,7 @@ export function ScanConfigPanel({ onStartScan }: ScanConfigPanelProps) {
   }> = [
     {
       id: "quick",
+      label: "01",
       title: "Quick Pass",
       subtitle: "Homepage only",
       details: "Best for landing pages",
@@ -88,6 +88,7 @@ export function ScanConfigPanel({ onStartScan }: ScanConfigPanelProps) {
     },
     {
       id: "standard",
+      label: "02",
       title: "Launch Check",
       subtitle: "Homepage + public routes",
       details: "Best before public sharing",
@@ -95,9 +96,9 @@ export function ScanConfigPanel({ onStartScan }: ScanConfigPanelProps) {
       badge: "Default",
     },
     {
-      // ScanMode doesn’t currently include “deep”; keep this as coming soon UI-only.
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       id: "standard" as any,
+      label: "03",
       title: "Release Gate",
       subtitle: "Browser checks, screenshots, deeper crawl",
       details: "Pro / Coming soon",
@@ -119,7 +120,7 @@ Tasks:
 
 Constraints:
 - Keep existing styling and layout.
-- Don’t introduce breaking route changes.
+- Don't introduce breaking route changes.
 
 Site URL: <PASTE_YOUR_URL_HERE>`;
 
@@ -129,7 +130,6 @@ Site URL: <PASTE_YOUR_URL_HERE>`;
       setCopied(true);
       window.setTimeout(() => setCopied(false), 1400);
     } catch {
-      // no-op: clipboard may be blocked; still keep UI responsive
       setCopied(false);
     }
   };
@@ -140,78 +140,165 @@ Site URL: <PASTE_YOUR_URL_HERE>`;
       animate={{ opacity: 1, y: 0 }}
       exit={{ opacity: 0, scale: 0.95 }}
       transition={{ duration: 0.5 }}
-      className="relative"
+      className="relative min-h-screen overflow-x-hidden"
+      style={{ backgroundColor: "#05080d", color: "#f0f4ff" }}
     >
-      {/* Paper grid background */}
-      <div className="pointer-events-none absolute inset-0 bg-coord-grid opacity-80" />
+      {/* Dark grid */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          backgroundImage:
+            "linear-gradient(rgba(255,255,255,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.03) 1px, transparent 1px)",
+          backgroundSize: "40px 40px",
+        }}
+      />
+      {/* Scanlines */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          backgroundImage:
+            "repeating-linear-gradient(0deg, transparent, transparent 2px, rgba(0,0,0,0.07) 2px, rgba(0,0,0,0.07) 4px)",
+        }}
+      />
+      {/* Green radial spotlight */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse 80% 55% at 50% 35%, rgba(49,233,129,0.04) 0%, transparent 70%)",
+        }}
+      />
+      {/* Edge vignette */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background:
+            "radial-gradient(ellipse 100% 100% at 50% 50%, transparent 55%, rgba(0,0,0,0.5) 100%)",
+        }}
+      />
 
-      <div className="container mx-auto px-4 py-8 md:py-12 max-w-7xl relative">
-        {/* Navigation */}
-        <header className="flex items-center justify-between gap-4 mb-10 border-b border-[var(--ink)]/10 pb-4">
+      {/* Decorative corner labels — hidden on mobile */}
+      <span className="hidden sm:block absolute top-4 left-4 font-mono text-[9px] text-white/20 pointer-events-none select-none">STATUS: READY</span>
+      <span className="hidden sm:block absolute top-4 right-4 font-mono text-[9px] text-white/20 pointer-events-none select-none">ENGINE: RULES-BASED</span>
+      <span className="hidden sm:block absolute bottom-4 left-4 font-mono text-[9px] text-white/20 pointer-events-none select-none">MODE: PRE-LAUNCH</span>
+      <span className="hidden sm:block absolute bottom-4 right-4 font-mono text-[9px] text-white/20 pointer-events-none select-none">NO AI GUESSING</span>
+
+      <div className="container mx-auto px-4 py-8 md:py-10 max-w-7xl relative">
+
+        {/* ── NAV ── */}
+        <header
+          className="flex items-center justify-between gap-4 mb-10 pb-4"
+          style={{ borderBottom: "1px solid rgba(255,255,255,0.07)" }}
+        >
           <div className="flex items-center gap-3">
-            <div className="h-9 w-9 border border-[var(--ink)]/20 bg-[var(--paper)] flex items-center justify-center">
-              <span className="font-semibold tracking-tight text-[var(--ink)]">L</span>
+            <div
+              className="h-9 w-9 flex items-center justify-center"
+              style={{ border: "1px solid rgba(255,255,255,0.2)", background: "rgba(49,233,129,0.07)" }}
+            >
+              <span className="font-mono font-semibold text-white text-sm">V</span>
             </div>
             <div className="leading-tight">
-              <div className="font-semibold tracking-tight text-[var(--ink)]">VibeSiteScan</div>
-              <div className="text-xs text-[var(--ink)]/55">Final QA for AI-built websites</div>
+              <div className="font-semibold tracking-tight text-white text-[15px]">VibeSite Scan</div>
+              <div className="font-mono text-[10px] tracking-wide" style={{ color: "rgba(240,244,255,0.55)" }}>
+                Final QA for AI-built websites
+              </div>
             </div>
           </div>
 
-          <nav className="hidden md:flex items-center gap-6 text-sm text-[var(--ink)]/70">
-            <Link href="/r/sample" className="hover:text-[var(--blood)] transition-colors">
+          <nav className="hidden md:flex items-center gap-6">
+            <Link href="/r/sample" className="font-mono text-xs tracking-wide transition-colors" style={{ color: "rgba(240,244,255,0.62)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(240,244,255,0.9)")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(240,244,255,0.62)")}
+            >
               Sample Report
             </Link>
-            <Link href="/pricing" className="hover:text-[var(--blood)] transition-colors">
+            <Link href="/pricing" className="font-mono text-xs tracking-wide transition-colors" style={{ color: "rgba(240,244,255,0.62)" }}
+              onMouseEnter={(e) => (e.currentTarget.style.color = "rgba(240,244,255,0.9)")}
+              onMouseLeave={(e) => (e.currentTarget.style.color = "rgba(240,244,255,0.62)")}
+            >
               Pricing
             </Link>
-            <Link
-              href="/dashboard"
-              className="inline-flex items-center gap-2 px-3 py-2 border border-[var(--ink)]/20 bg-[var(--paper)] hover:bg-[var(--ink)] hover:text-[var(--cream)] text-[var(--ink)] transition-colors"
-            >
-              Dashboard / Sign in
-            </Link>
+            <NavAccount />
           </nav>
         </header>
 
-        {/* Hero */}
+        {/* ── HERO ── */}
         <section className="text-center mb-10 md:mb-12">
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ delay: 0.06 }}
+            className="font-mono text-[11px] uppercase tracking-[0.2em] mb-4"
+            style={{ color: "rgba(49,233,129,0.6)" }}
+          >
+            SCAN CONFIGURATION
+          </motion.div>
+
           <motion.h1
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.08, duration: 0.5 }}
-            className="text-4xl md:text-6xl font-semibold tracking-tight text-[var(--ink)] ink-headline"
+            transition={{ delay: 0.1, duration: 0.5 }}
+            className="text-3xl md:text-5xl font-semibold tracking-tight text-white/95"
           >
-            Before you share your AI-built website, check what AI missed.
+            Configure your launch scan.
           </motion.h1>
+
           <motion.p
             initial={{ opacity: 0, y: 6 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.14, duration: 0.5 }}
-            className="mt-5 text-base md:text-xl text-[var(--ink)]/65 max-w-4xl mx-auto"
+            transition={{ delay: 0.16, duration: 0.5 }}
+            className="mt-4 text-base md:text-lg max-w-2xl mx-auto"
+            style={{ color: "rgba(240,244,255,0.68)" }}
           >
-            VibeSiteScan catches missing share previews, metadata, broken routes, sitemap, robots.txt, forms, and launch hygiene issues in seconds.
+            Choose scan depth. We&apos;ll check public routes, metadata, links, forms, and launch hygiene before you share.
           </motion.p>
 
-          {/* Command bar */}
+          {/* ── COMMAND BAR ── */}
           <motion.div
             initial={{ opacity: 0, y: 10 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: 0.20, duration: 0.5 }}
+            transition={{ delay: 0.22, duration: 0.5 }}
             className="mt-8 max-w-3xl mx-auto"
           >
-            <div className="flex flex-col sm:flex-row gap-3 sm:gap-2 items-stretch sm:items-center intel-panel p-2">
+            {/* Target URL label */}
+            <div className="text-left mb-2 font-mono text-[11px] tracking-[0.18em] uppercase"
+              style={{ color: "rgba(49,233,129,0.7)" }}>
+              TARGET URL
+            </div>
+            <div
+              className="flex flex-col sm:flex-row gap-2 items-stretch sm:items-center p-2"
+              style={{ background: "rgba(10,16,26,0.80)", border: "1px solid rgba(255,255,255,0.13)" }}
+            >
               <div className="flex-1 relative">
                 <input
                   type="text"
                   value={targetUrl}
-                  onChange={(e) => {
-                    setTargetUrl(e.target.value);
-                    validateUrl(e.target.value);
-                  }}
+                  onChange={(e) => { setTargetUrl(e.target.value); validateUrl(e.target.value); }}
                   onKeyDown={(e) => e.key === "Enter" && handleStartScan()}
                   placeholder="https://your-site.com"
-                  className="w-full h-12 px-4 sm:px-5 bg-[var(--cream)] border border-[var(--ink)]/15 focus:border-[var(--blood)] focus:outline-none text-[var(--ink)] placeholder:text-[var(--ink)]/35 font-mono text-sm sm:text-base"
+                  className="w-full h-13 px-4 sm:px-5 font-mono text-sm sm:text-base outline-none transition-all placeholder:text-white/25"
+                  style={{
+                    background: "rgba(5,8,13,0.9)",
+                    border: urlError
+                      ? "1px solid rgba(255,77,94,0.75)"
+                      : isValidUrl
+                      ? "1px solid rgba(49,233,129,0.6)"
+                      : "1px solid rgba(255,255,255,0.14)",
+                    color: "#f0f4ff",
+                    height: "3.25rem",
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = "rgba(49,233,129,0.7)";
+                    e.target.style.boxShadow = "0 0 0 3px rgba(49,233,129,0.12), inset 0 0 12px rgba(49,233,129,0.03)";
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = urlError
+                      ? "rgba(255,77,94,0.75)"
+                      : isValidUrl
+                      ? "rgba(49,233,129,0.6)"
+                      : "rgba(255,255,255,0.14)";
+                    e.target.style.boxShadow = "none";
+                  }}
                   inputMode="url"
                   autoCapitalize="none"
                   autoCorrect="off"
@@ -228,102 +315,113 @@ Site URL: <PASTE_YOUR_URL_HERE>`;
 
               <motion.button
                 onClick={handleStartScan}
-                whileHover={{ y: -1 }}
+                whileHover={{ y: -1, boxShadow: "0 0 20px rgba(49,233,129,0.3)" }}
                 whileTap={{ scale: 0.99 }}
-                className="h-12 px-5 font-semibold btn-blood inline-flex items-center justify-center gap-2"
+                className="h-12 px-6 font-mono text-xs font-semibold tracking-widest uppercase inline-flex items-center justify-center gap-2 transition-all shrink-0"
+                style={{ background: "#31e981", color: "#05080d", height: "3.25rem" }}
               >
-                Run free launch check
-                <ArrowRight className="w-4 h-4" />
+                Run Free Scan <ArrowRight className="w-4 h-4" />
               </motion.button>
             </div>
 
-            <div className="mt-3 flex flex-col sm:flex-row items-center justify-center gap-3 text-xs text-[var(--ink)]/55">
-              <span className="inline-flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400/80" />
-                Public pages only
+            <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1.5 font-mono text-[11px]"
+              style={{ color: "rgba(240,244,255,0.60)" }}>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400/80" />Public pages only
               </span>
-              <span className="hidden sm:block text-[var(--ink)]/25">•</span>
-              <span className="inline-flex items-center gap-2">
-                <span className="h-1.5 w-1.5 rounded-full bg-cyan-300/80" />
-                No code required
+              <span className="hidden sm:block" style={{ color: "rgba(255,255,255,0.18)" }}>·</span>
+              <span className="inline-flex items-center gap-1.5">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-400/80" />No code required
               </span>
-              <span className="hidden sm:block text-[var(--ink)]/25">•</span>
-              <Link href="/r/sample" className="inline-flex items-center gap-1 text-[var(--ink)]/70 hover:text-[var(--ink)] transition-colors">
-                View sample report <ExternalLink className="w-3.5 h-3.5" />
+              <span className="hidden sm:block" style={{ color: "rgba(255,255,255,0.18)" }}>·</span>
+              <Link href="/r/sample" className="inline-flex items-center gap-1 hover:text-white/80 transition-colors">
+                View sample report <ExternalLink className="w-3 h-3" />
               </Link>
             </div>
 
             {urlError && (
-              <div className="mt-3 text-sm text-red-300/90 flex items-center justify-center gap-2">
-                <AlertCircle className="w-4 h-4" />
-                {urlError}
+              <div className="mt-3 font-mono text-xs text-red-400 flex items-center justify-center gap-2">
+                <AlertCircle className="w-4 h-4" />{urlError}
               </div>
             )}
           </motion.div>
 
-          {/* Trust strip */}
+          {/* ── TRUST CHIPS ── */}
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ delay: 0.26, duration: 0.5 }}
-            className="mt-8 flex flex-wrap items-center justify-center gap-2"
+            transition={{ delay: 0.30, duration: 0.5 }}
+            className="mt-6 flex flex-wrap items-center justify-center gap-2"
           >
-            {[
-              "Works with Vercel",
-              "Works with Netlify",
-              "Works with Replit",
-              "Built for Lovable/Bolt/Cursor sites",
-              "Public pages only",
-              "No code required",
-            ].map((pill) => (
+            {["Works with Vercel", "Works with Netlify", "Works with Replit", "Built for Lovable/Bolt/Cursor", "Public pages only", "No code required"].map((pill) => (
               <span
                 key={pill}
-                className="px-3 py-1.5 rounded-full text-xs text-[var(--ink)]/70 intel-panel border border-white/10"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 font-mono text-[11px] tracking-wide transition-colors cursor-default"
+                style={{
+                  background: "rgba(255,255,255,0.04)",
+                  border: "1px solid rgba(255,255,255,0.13)",
+                  color: "rgba(240,244,255,0.72)",
+                }}
               >
+                <span className="h-1.5 w-1.5 rounded-full shrink-0" style={{ background: "rgba(49,233,129,0.6)" }} />
                 {pill}
               </span>
             ))}
           </motion.div>
         </section>
 
-        {/* Main two-column */}
+        {/* ── MAIN TWO-COLUMN ── */}
         <section className="grid lg:grid-cols-2 gap-6 lg:gap-8 items-start">
-          {/* Left: Launch Check Setup */}
+
+          {/* ── LEFT: SCAN CONFIGURATION ── */}
           <motion.div
             initial={{ opacity: 0, x: -12 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.12, duration: 0.5 }}
-            className="rounded-2xl intel-panel p-6 md:p-8"
+            transition={{ delay: 0.14, duration: 0.5 }}
+            className="p-6 md:p-8"
+            style={{ background: "rgba(10,16,26,0.72)", border: "1px solid rgba(255,255,255,0.08)" }}
           >
-            <div className="flex items-start justify-between gap-4 mb-6">
+            {/* Panel label */}
+            <div className="flex items-start justify-between gap-4 mb-7">
               <div>
-                <h2 className="text-xl font-semibold text-[var(--ink)]">Launch Check Setup</h2>
-                <p className="mt-1 text-sm text-[var(--ink)]/60">
-                  Choose how deep to scan. We’ll generate a fix prompt after the report.
+                <div className="font-mono text-[11px] tracking-[0.18em] uppercase mb-2" style={{ color: "rgba(49,233,129,0.6)" }}>
+                  [01] SCAN CONFIGURATION
+                </div>
+                <h2 className="text-lg font-semibold text-white/90">Launch Check Setup</h2>
+                <p className="mt-1 text-sm" style={{ color: "rgba(240,244,255,0.65)" }}>
+                  Choose scan depth. We&apos;ll generate a fix prompt after the report.
                 </p>
               </div>
-              <span className="text-xs text-[var(--ink)]/55 intel-panel border border-white/10 px-2 py-1 rounded-full">
+              <span
+                className="font-mono text-[10px] tracking-widest uppercase px-2 py-1 shrink-0"
+                style={{ border: "1px solid rgba(49,233,129,0.3)", color: "rgba(49,233,129,0.7)", background: "rgba(49,233,129,0.06)" }}
+              >
                 Free
               </span>
             </div>
 
-            {/* Scan mode selector */}
+            {/* ── SCAN MODE ── */}
+            <div className="font-mono text-[11px] tracking-[0.18em] uppercase mb-3" style={{ color: "rgba(49,233,129,0.6)" }}>
+              [02] SCAN MODE
+            </div>
             <div className="grid md:grid-cols-3 gap-3">
               {tierCards.map((tier) => {
                 const selected = !tier.disabled && scanMode === tier.id;
                 const badge =
                   tier.badge === "Default" ? (
-                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-cyan-400/10 text-cyan-200 border border-cyan-300/20">
+                    <span className="font-mono text-[10px] px-2 py-0.5 tracking-wide"
+                      style={{ background: "rgba(49,233,129,0.1)", color: "rgba(49,233,129,0.8)", border: "1px solid rgba(49,233,129,0.2)" }}>
                       Default
                     </span>
                   ) : tier.badge === "Free" ? (
-                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-200 border border-emerald-300/20">
+                    <span className="font-mono text-[10px] px-2 py-0.5 tracking-wide"
+                      style={{ background: "rgba(49,233,129,0.07)", color: "rgba(49,233,129,0.7)", border: "1px solid rgba(49,233,129,0.15)" }}>
                       Free
                     </span>
                   ) : (
-                    <span className="text-[11px] px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-200 border border-amber-300/20 inline-flex items-center gap-1">
-                      <Lock className="w-3 h-3" />
-                      Pro
+                    <span className="font-mono text-[10px] px-2 py-0.5 tracking-wide inline-flex items-center gap-1"
+                      style={{ background: "rgba(246,184,75,0.08)", color: "rgba(246,184,75,0.7)", border: "1px solid rgba(246,184,75,0.2)" }}>
+                      <Lock className="w-2.5 h-2.5" />Pro
                     </span>
                   );
 
@@ -333,37 +431,49 @@ Site URL: <PASTE_YOUR_URL_HERE>`;
                     type="button"
                     onClick={() => !tier.disabled && setScanMode(tier.id)}
                     whileHover={tier.disabled ? undefined : { y: -2 }}
-                    className={[
-                      "text-left rounded-2xl p-4 border transition-colors",
-                      tier.disabled
-                        ? "bg-black/20 border-white/10 opacity-55 cursor-not-allowed"
-                        : selected
-                          ? "bg-white/8 border-white/20"
-                          : "bg-black/20 border-white/10 hover:border-white/20",
-                    ].join(" ")}
+                    transition={{ duration: 0.15 }}
+                    className="text-left p-4 transition-all"
+                    style={{
+                      background: selected ? "rgba(49,233,129,0.06)" : "rgba(5,8,13,0.6)",
+                      border: selected ? "1px solid rgba(49,233,129,0.45)" : "1px solid rgba(255,255,255,0.07)",
+                      boxShadow: selected ? "0 0 16px rgba(49,233,129,0.08)" : "none",
+                      opacity: tier.disabled ? 0.45 : 1,
+                      cursor: tier.disabled ? "not-allowed" : "pointer",
+                    }}
                     disabled={tier.disabled}
                   >
-                    <div className="flex items-start justify-between gap-3">
-                      <div className="font-semibold text-[var(--ink)]">{tier.title}</div>
+                    <div className="font-mono text-[10px] tracking-widest mb-2"
+                      style={{ color: selected ? "rgba(49,233,129,0.7)" : "rgba(255,255,255,0.22)" }}>
+                      {tier.label}
+                    </div>
+                    <div className="flex items-start justify-between gap-2 mb-2">
+                      <div className="font-semibold text-white/85 text-sm">{tier.title}</div>
                       {badge}
                     </div>
-                    <div className="mt-2 text-sm text-[var(--ink)]/65">{tier.subtitle}</div>
-                    <div className="mt-1 text-xs text-[var(--ink)]/45">{tier.details}</div>
-                    <div className="mt-3 text-xs text-[var(--ink)]/70 font-mono">{tier.duration}</div>
+                    <div className="text-xs" style={{ color: "rgba(240,244,255,0.70)" }}>{tier.subtitle}</div>
+                    <div className="text-[11px] mt-1" style={{ color: "rgba(240,244,255,0.52)" }}>{tier.details}</div>
+                    <div className="mt-3 font-mono text-[11px]"
+                      style={{ color: selected ? "rgba(49,233,129,0.80)" : "rgba(240,244,255,0.58)" }}>
+                      {tier.duration}
+                    </div>
                   </motion.button>
                 );
               })}
             </div>
 
-            {/* Optional checks accordion */}
-            <div className="mt-6 border-t border-white/10 pt-5">
+            {/* ── OPTIONAL CHECKS ── */}
+            <div className="mt-7" style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: "1.25rem" }}>
               <button
                 type="button"
                 onClick={() => setOptionalOpen((v) => !v)}
-                className="w-full flex items-center justify-between text-sm text-[var(--ink)]/75 hover:text-[var(--ink)] transition-colors"
+                className="w-full flex items-center justify-between"
               >
-                <span className="font-medium">Optional checks</span>
-                <span className="text-xs text-[var(--ink)]/55">{optionalOpen ? "Hide" : "Show"}</span>
+                <div className="font-mono text-[11px] tracking-[0.18em] uppercase" style={{ color: "rgba(49,233,129,0.6)" }}>
+                  [03] OPTIONAL MODULES
+                </div>
+                <span className="font-mono text-[10px] tracking-widest" style={{ color: "rgba(240,244,255,0.55)" }}>
+                  {optionalOpen ? "HIDE ↑" : "SHOW ↓"}
+                </span>
               </button>
 
               {optionalOpen && (
@@ -374,58 +484,40 @@ Site URL: <PASTE_YOUR_URL_HERE>`;
                   className="mt-4 grid sm:grid-cols-2 gap-3"
                 >
                   {[
-                    {
-                      label: "External links",
-                      value: includeExternalLinks,
-                      setter: setIncludeExternalLinks,
-                      hint: "Catch dead outbound links",
-                    },
-                    {
-                      label: "Forms",
-                      value: includeFormChecks,
-                      setter: setIncludeFormChecks,
-                      hint: "Basic form structure checks",
-                    },
-                    {
-                      label: "Sitemap & robots",
-                      value: includeSitemapDiscovery,
-                      setter: setIncludeSitemapDiscovery,
-                      hint: "Launch hygiene essentials",
-                    },
-                    {
-                      label: "Browser basics",
-                      value: includeBrowserChecks,
-                      setter: setIncludeBrowserChecks,
-                      hint: "Light browser checks",
-                    },
-                    {
-                      label: "Image alt basics",
-                      value: includeImageAccessibility,
-                      setter: setIncludeImageAccessibility,
-                      hint: "Quick accessibility signal",
-                    },
+                    { label: "External links", value: includeExternalLinks, setter: setIncludeExternalLinks, hint: "Catch dead outbound links" },
+                    { label: "Forms", value: includeFormChecks, setter: setIncludeFormChecks, hint: "Basic form structure checks" },
+                    { label: "Sitemap & robots", value: includeSitemapDiscovery, setter: setIncludeSitemapDiscovery, hint: "Launch hygiene essentials" },
+                    { label: "Browser basics", value: includeBrowserChecks, setter: setIncludeBrowserChecks, hint: "Light browser checks" },
+                    { label: "Image alt basics", value: includeImageAccessibility, setter: setIncludeImageAccessibility, hint: "Quick accessibility signal" },
                   ].map((opt) => (
                     <button
                       key={opt.label}
                       type="button"
                       onClick={() => opt.setter(!opt.value)}
-                      className="rounded-xl bg-black/20 border border-white/10 hover:border-white/20 p-4 text-left flex items-start justify-between gap-4"
+                      className="p-4 text-left flex items-start justify-between gap-4 transition-all"
+                      style={{
+                        background: opt.value ? "rgba(49,233,129,0.04)" : "rgba(5,8,13,0.5)",
+                        border: opt.value ? "1px solid rgba(49,233,129,0.22)" : "1px solid rgba(255,255,255,0.07)",
+                      }}
                     >
                       <div>
-                        <div className="text-sm font-medium text-[var(--ink)]">{opt.label}</div>
-                        <div className="text-xs text-[var(--ink)]/50 mt-1">{opt.hint}</div>
+                        <div className="text-sm font-medium text-white/85">{opt.label}</div>
+                        <div className="text-[11px] mt-1" style={{ color: "rgba(240,244,255,0.60)" }}>{opt.hint}</div>
                       </div>
                       <div
-                        className={[
-                          "h-6 w-11 rounded-full border border-white/10 p-0.5 flex items-center",
-                          opt.value ? "bg-emerald-500/20" : "intel-panel",
-                        ].join(" ")}
+                        className="h-6 w-11 p-0.5 flex items-center shrink-0 transition-colors"
+                        style={{
+                          borderRadius: "9999px",
+                          background: opt.value ? "rgba(49,233,129,0.22)" : "rgba(255,255,255,0.05)",
+                          border: opt.value ? "1px solid rgba(49,233,129,0.38)" : "1px solid rgba(255,255,255,0.09)",
+                        }}
                       >
                         <div
-                          className={[
-                            "h-5 w-5 rounded-full bg-white transition-transform",
-                            opt.value ? "translate-x-5" : "translate-x-0",
-                          ].join(" ")}
+                          className="h-5 w-5 rounded-full transition-transform"
+                          style={{
+                            background: opt.value ? "#31e981" : "rgba(255,255,255,0.35)",
+                            transform: opt.value ? "translateX(1.25rem)" : "translateX(0)",
+                          }}
                         />
                       </div>
                     </button>
@@ -434,80 +526,118 @@ Site URL: <PASTE_YOUR_URL_HERE>`;
               )}
             </div>
 
-            {/* Primary action */}
-            <div className="mt-6">
+            {/* ── PRIMARY CTA ── */}
+            <div className="mt-7">
+              <div className="font-mono text-[11px] tracking-[0.18em] uppercase mb-3" style={{ color: "rgba(49,233,129,0.6)" }}>
+                [04] RUN SCAN
+              </div>
               <motion.button
                 onClick={handleStartScan}
-                whileHover={{ y: -1 }}
+                whileHover={{ y: -1, boxShadow: "0 0 24px rgba(49,233,129,0.3)" }}
                 whileTap={{ scale: 0.99 }}
-                className="w-full h-12 font-semibold btn-blood inline-flex items-center justify-center gap-2"
+                className="w-full h-12 font-mono text-sm font-semibold tracking-widest uppercase inline-flex items-center justify-center gap-2 transition-all"
+                style={{
+                  background: "#31e981",
+                  color: "#05080d",
+                  opacity: !targetUrl.trim() ? 0.45 : 1,
+                  cursor: !targetUrl.trim() ? "not-allowed" : "pointer",
+                }}
               >
-                Run free launch check
-                <ArrowRight className="w-4 h-4" />
+                Run Free Scan <ArrowRight className="w-4 h-4" />
               </motion.button>
-              <p className="mt-3 text-xs text-[var(--ink)]/55">
-                After every scan, you’ll get a fix prompt you can paste into Cursor, Lovable, Bolt, or Replit.
-              </p>
+              <div className="mt-4 flex flex-wrap items-center justify-center gap-3 font-mono text-[10px] tracking-widest"
+                style={{ color: "rgba(240,244,255,0.58)" }}>
+                <span style={{ color: "rgba(49,233,129,0.5)" }}>◆</span>
+                <span>RULES-BASED CHECKS</span>
+                <span style={{ color: "rgba(49,233,129,0.5)" }}>◆</span>
+                <span>CLEAR EVIDENCE</span>
+                <span style={{ color: "rgba(49,233,129,0.5)" }}>◆</span>
+                <span>NO AI GUESSING</span>
+                <span style={{ color: "rgba(49,233,129,0.5)" }}>◆</span>
+              </div>
             </div>
           </motion.div>
 
-          {/* Right: Sample Launch Decision */}
+          {/* ── RIGHT: SCAN PREVIEW ── */}
           <motion.div
             initial={{ opacity: 0, x: 12 }}
             animate={{ opacity: 1, x: 0 }}
-            transition={{ delay: 0.16, duration: 0.5 }}
-            className="rounded-2xl intel-panel p-6 md:p-8 lg:sticky lg:top-8"
+            transition={{ delay: 0.18, duration: 0.5 }}
+            className="p-6 md:p-8 lg:sticky lg:top-8"
+            style={{ background: "rgba(10,16,26,0.72)", border: "1px solid rgba(255,255,255,0.08)" }}
           >
-            <div className="flex items-center justify-between gap-3">
-              <h2 className="text-xl font-semibold text-[var(--ink)]">Sample Launch Decision</h2>
-              <span className="text-xs text-[var(--ink)]/55 intel-panel border border-white/10 px-2 py-1 rounded-full">
+            <div className="flex items-center justify-between gap-3 mb-6">
+              <div>
+                <div className="font-mono text-[11px] tracking-[0.18em] uppercase mb-1"
+                  style={{ color: "rgba(49,233,129,0.6)" }}>
+                  SCAN PREVIEW
+                </div>
+                <h2 className="text-lg font-semibold text-white/90">Sample Launch Decision</h2>
+              </div>
+              <span
+                className="font-mono text-[10px] tracking-widest uppercase px-2 py-1 shrink-0"
+                style={{ border: "1px solid rgba(255,255,255,0.1)", color: "rgba(240,244,255,0.38)", background: "rgba(255,255,255,0.03)" }}
+              >
                 Sample
               </span>
             </div>
 
-            <div className="mt-5 terminal-window rounded overflow-hidden">
-              <div className="terminal-bar">
-                <span className="terminal-dot bg-[#ff5f57]" />
-                <span className="terminal-dot bg-[#febc2e]" />
-                <span className="terminal-dot bg-[#28c840]" />
-                <span className="ml-2 text-[10px] text-[#8b949e] uppercase tracking-widest">Sample output</span>
+            {/* Terminal window */}
+            <div style={{ border: "1px solid rgba(255,255,255,0.1)", background: "rgba(5,8,13,0.8)", overflow: "hidden" }}>
+              <div className="flex items-center gap-2 px-4 py-2.5"
+                style={{ background: "rgba(255,255,255,0.04)", borderBottom: "1px solid rgba(255,255,255,0.07)" }}>
+                <span className="h-3 w-3 rounded-full bg-[#ff5f57]" />
+                <span className="h-3 w-3 rounded-full bg-[#febc2e]" />
+                <span className="h-3 w-3 rounded-full bg-[#28c840]" />
+                <span className="ml-2 font-mono text-[10px] uppercase tracking-widest"
+                  style={{ color: "rgba(240,244,255,0.28)" }}>
+                  SAMPLE OUTPUT
+                </span>
               </div>
               <div className="p-5">
-              <div className="flex items-center justify-between gap-3 mb-4">
-                <span className="inline-flex items-center gap-2 px-3 py-1 text-xs font-medium bg-red-500/20 text-red-300 border border-red-500/30 class-label">
-                  Fix Before Sharing
-                </span>
-                <span className="text-xs text-[#8b949e] font-mono">Launch Readiness</span>
-              </div>
-
-              <div className="flex items-end justify-between gap-4">
-                <div className="text-4xl font-semibold tracking-tight text-[#c9d1d9]">
-                  72<span className="text-[#8b949e] text-xl">/100</span>
+                <div className="flex items-center justify-between gap-3 mb-5">
+                  <span
+                    className="inline-flex items-center gap-2 px-3 py-1 font-mono text-xs font-medium tracking-widest uppercase"
+                    style={{ background: "rgba(255,77,94,0.14)", color: "#ff4d5e", border: "1px solid rgba(255,77,94,0.28)" }}
+                  >
+                    Fix Before Sharing
+                  </span>
+                  <span className="font-mono text-[10px] tracking-widest uppercase"
+                    style={{ color: "rgba(240,244,255,0.52)" }}>
+                    Launch Readiness
+                  </span>
                 </div>
-                <div className="text-right text-sm text-[#8b949e]">
-                  <div>Coverage: <span className="text-[#4ade80]">91%</span></div>
-                  <div>Confidence: <span className="text-[#c9d1d9]">High</span></div>
-                </div>
-              </div>
 
-              <div className="mt-5">
-                <div className="text-sm font-medium text-[#c9d1d9] mb-3">Top fixes</div>
-                <ol className="space-y-2 text-sm text-[#8b949e]">
-                  {[
-                    "Add OG image",
-                    "Add favicon",
-                    "Add sitemap.xml",
-                    "Replace placeholder CTA links",
-                  ].map((t, idx) => (
-                    <li key={t} className="flex items-start gap-3">
-                      <span className="mt-0.5 h-5 w-5 rounded-full border border-[#30363d] text-xs text-[#8b949e] flex items-center justify-center">
-                        {idx + 1}
-                      </span>
-                      <span>{t}</span>
-                    </li>
-                  ))}
-                </ol>
-              </div>
+                <div className="flex items-end justify-between gap-4">
+                  <div className="font-semibold tracking-tight text-white/90" style={{ fontSize: "2.5rem", lineHeight: 1 }}>
+                    72<span className="text-xl" style={{ color: "rgba(240,244,255,0.32)" }}>/100</span>
+                  </div>
+                  <div className="text-right font-mono text-sm" style={{ color: "rgba(240,244,255,0.65)" }}>
+                    <div>Coverage: <span className="text-emerald-400">91%</span></div>
+                    <div>Confidence: <span className="text-white/75">High</span></div>
+                  </div>
+                </div>
+
+                <div className="mt-5" style={{ borderTop: "1px solid rgba(255,255,255,0.07)", paddingTop: "1.25rem" }}>
+                  <div className="font-mono text-[11px] uppercase tracking-widest mb-3"
+                    style={{ color: "rgba(240,244,255,0.58)" }}>
+                    Top Blockers
+                  </div>
+                  <ol className="space-y-2">
+                    {["Missing OG image", "Broken internal link", "Dead contact form", "Placeholder CTA links"].map((t, idx) => (
+                      <li key={t} className="flex items-start gap-3 font-mono text-sm"
+                        style={{ color: "rgba(240,244,255,0.72)" }}>
+                        <span
+                          className="mt-0.5 h-5 w-5 flex items-center justify-center text-[10px] shrink-0"
+                          style={{ border: "1px solid rgba(255,77,94,0.28)", color: "#ff4d5e" }}
+                        >
+                          {String(idx + 1).padStart(2, "0")}
+                        </span>
+                        <span>{t}</span>
+                      </li>
+                    ))}
+                  </ol>
+                </div>
               </div>
             </div>
 
@@ -516,30 +646,37 @@ Site URL: <PASTE_YOUR_URL_HERE>`;
               onClick={handleCopyPrompt}
               whileHover={{ y: -1 }}
               whileTap={{ scale: 0.99 }}
-              className="mt-5 w-full h-11 font-semibold btn-ghost inline-flex items-center justify-center gap-2"
+              className="mt-4 w-full h-11 font-mono text-xs font-semibold tracking-widest uppercase inline-flex items-center justify-center gap-2 transition-all"
+              style={{
+                background: "transparent",
+                border: "1px solid rgba(255,255,255,0.14)",
+                color: copied ? "#31e981" : "rgba(240,244,255,0.72)",
+              }}
             >
               <Copy className="w-4 h-4" />
-              {copied ? "Copied" : "Copy AI Fix Prompt"}
+              {copied ? "Copied ✓" : "Copy AI Fix Prompt"}
             </motion.button>
 
-            <p className="mt-3 text-xs text-[var(--ink)]/55">
-              After every scan, get a fix prompt you can paste into Cursor, Lovable, Bolt, or Replit.
+            <p className="mt-3 font-mono text-[11px] text-center" style={{ color: "rgba(240,244,255,0.50)" }}>
+              After every scan, get evidence and copy-paste fix prompts for Cursor, Lovable, Bolt, or Replit.
             </p>
           </motion.div>
         </section>
 
-        {/* Common mistakes */}
+        {/* ── COMMON MISTAKES ── */}
         <section className="mt-12 md:mt-16">
-          <div className="max-w-3xl">
-            <h3 className="text-2xl md:text-3xl font-semibold tracking-tight text-[var(--ink)]">
-              What AI-built sites often miss
-            </h3>
-            <p className="mt-3 text-sm md:text-base text-[var(--ink)]/60">
-              These are the launch hygiene issues that make a “done” site feel unfinished the moment you share the link.
+          <div className="max-w-3xl mb-6">
+            <div className="font-mono text-[11px] tracking-[0.18em] uppercase mb-3"
+              style={{ color: "rgba(49,233,129,0.6)" }}>
+              WHAT AI BUILDERS MISS
+            </div>
+            <h3 className="text-2xl font-semibold text-white/85">Common launch hygiene issues</h3>
+            <p className="mt-2 text-sm" style={{ color: "rgba(240,244,255,0.60)" }}>
+              These are the issues that make a &quot;done&quot; site feel unfinished the moment you share the link.
             </p>
           </div>
 
-          <div className="mt-6 grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
             {[
               { title: "Ugly link preview", desc: "Your link shows no image or wrong title." },
               { title: "Missing favicon", desc: "Browser tab still looks unfinished." },
@@ -555,80 +692,45 @@ Site URL: <PASTE_YOUR_URL_HERE>`;
                 viewport={{ once: true, margin: "-80px" }}
                 transition={{ delay: idx * 0.05, duration: 0.35 }}
                 whileHover={{ y: -2 }}
-                className="rounded-2xl intel-panel p-5"
+                className="p-5 transition-all"
+                style={{ background: "rgba(10,16,26,0.6)", border: "1px solid rgba(255,255,255,0.07)" }}
               >
-                <div className="text-[var(--ink)] font-medium">{c.title}</div>
-                <div className="mt-2 text-sm text-[var(--ink)]/60">{c.desc}</div>
+                <div className="text-white/80 font-medium text-sm">{c.title}</div>
+                <div className="mt-2 text-sm" style={{ color: "rgba(240,244,255,0.60)" }}>{c.desc}</div>
               </motion.div>
             ))}
           </div>
         </section>
 
-        {/* How it works */}
-        <section className="mt-12 md:mt-16">
-          <h3 className="text-2xl md:text-3xl font-semibold tracking-tight text-[var(--ink)]">How it works</h3>
-          <div className="mt-6 grid md:grid-cols-4 gap-4">
+        {/* ── HOW IT WORKS ── */}
+        <section className="mt-12 md:mt-16 pb-12">
+          <div className="font-mono text-[11px] tracking-[0.18em] uppercase mb-3"
+            style={{ color: "rgba(49,233,129,0.6)" }}>
+            HOW IT WORKS
+          </div>
+          <h3 className="text-2xl font-semibold text-white/85 mb-6">Four steps to launch-ready.</h3>
+          <div className="grid md:grid-cols-4 gap-3">
             {[
-              { step: "1", title: "Paste URL", desc: "Public site link only" },
-              { step: "2", title: "Run Launch Check", desc: "Seconds to scan basics" },
-              { step: "3", title: "Copy AI Fix Prompt", desc: "Paste into your builder" },
-              { step: "4", title: "Rescan and Share", desc: "Ship with confidence" },
+              { step: "01", title: "Paste URL", desc: "Public site link only" },
+              { step: "02", title: "Run Scan", desc: "Seconds to scan basics" },
+              { step: "03", title: "Copy Fix Prompt", desc: "Paste into your builder" },
+              { step: "04", title: "Rescan & Share", desc: "Ship with confidence" },
             ].map((s, idx) => (
               <motion.div
                 key={s.title}
                 initial={{ opacity: 0, y: 10 }}
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true, margin: "-80px" }}
-                transition={{ delay: idx * 0.05, duration: 0.35 }}
-                className="rounded-2xl intel-panel p-5"
+                transition={{ delay: idx * 0.07, duration: 0.35 }}
+                className="p-5"
+                style={{ background: "rgba(10,16,26,0.6)", border: "1px solid rgba(255,255,255,0.07)" }}
               >
-                <div className="text-xs text-[var(--ink)]/55 font-mono">Step {s.step}</div>
-                <div className="mt-2 text-[var(--ink)] font-medium">{s.title}</div>
-                <div className="mt-1 text-sm text-[var(--ink)]/60">{s.desc}</div>
+                <div className="font-mono text-[11px] tracking-widest mb-2"
+                  style={{ color: "rgba(49,233,129,0.52)" }}>{s.step}</div>
+                <div className="text-white/80 font-medium text-sm">{s.title}</div>
+                <div className="mt-1 text-sm" style={{ color: "rgba(240,244,255,0.55)" }}>{s.desc}</div>
               </motion.div>
             ))}
-          </div>
-        </section>
-
-        {/* Optional share preview before/after */}
-        <section className="mt-12 md:mt-16 pb-6">
-          <div className="flex items-end justify-between gap-4 flex-wrap">
-            <div>
-              <h3 className="text-2xl md:text-3xl font-semibold tracking-tight text-[var(--ink)]">
-                Share preview, before and after
-              </h3>
-              <p className="mt-3 text-sm md:text-base text-[var(--ink)]/60 max-w-2xl">
-                A clean OG image + title + description is the fastest way to make your project look legit when you post it.
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-6 grid lg:grid-cols-2 gap-4">
-            <div className="rounded-2xl intel-panel border border-white/10 p-5">
-              <div className="text-xs text-[var(--ink)]/55 mb-3">Before</div>
-              <div className="rounded-xl bg-black/25 border border-white/10 overflow-hidden">
-                <div className="h-36 bg-[linear-gradient(135deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] flex items-center justify-center text-[var(--ink)]/40 text-sm">
-                  No OG image
-                </div>
-                <div className="p-4">
-                  <div className="text-[var(--ink)]/75 font-medium">Example</div>
-                  <div className="mt-1 text-sm text-[var(--ink)]/45">AI-built website</div>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-2xl intel-panel border border-white/10 p-5">
-              <div className="text-xs text-[var(--ink)]/55 mb-3">After</div>
-              <div className="rounded-xl bg-black/25 border border-white/10 overflow-hidden">
-                <div className="h-36 bg-[radial-gradient(circle_at_30%_20%,rgba(56,189,248,0.25),transparent_60%),radial-gradient(circle_at_70%_60%,rgba(16,185,129,0.18),transparent_60%),linear-gradient(135deg,rgba(255,255,255,0.06),rgba(255,255,255,0.02))] flex items-center justify-center text-[var(--ink)]/75 text-sm">
-                  Clean preview image
-                </div>
-                <div className="p-4">
-                  <div className="text-[var(--ink)] font-medium">Launch-ready: metadata + preview</div>
-                  <div className="mt-1 text-sm text-[var(--ink)]/60">Clear title, description, and image for sharing</div>
-                </div>
-              </div>
-            </div>
           </div>
         </section>
       </div>

@@ -7,7 +7,8 @@ interface PipelineDetailPanelProps {
   stage: {
     id: string;
     label: string;
-    status: 'idle' | 'running' | 'completed' | 'warning' | 'failed';
+    status: 'idle' | 'running' | 'completed' | 'warning' | 'failed' | 'skipped';
+    statusMessage?: string;
     startedAt?: Date;
     completedAt?: Date;
     metrics?: Record<string, string | number | boolean | null>;
@@ -34,6 +35,12 @@ const STAGE_CHECKS: Record<string, string[]> = {
   forms: ['Form detection', 'Label/input association', 'Action attributes'],
   browser: ['Console errors', 'JS failures', 'Mixed content warnings'],
   score: ['robots.txt', 'sitemap.xml', 'noindex directives', 'Crawl hints'],
+  exposure: ['Public route map', 'Admin/debug route detection', 'Risk classification'],
+  ai_leftovers: ['Placeholder copy', 'Lorem ipsum', 'Template artifacts'],
+  keys: ['API key patterns', 'Firebase/Supabase config', 'Token-like strings in source'],
+  form_analysis: ['Validation coverage', 'Submission wiring', 'Risky form patterns'],
+  security: ['CSP / HSTS / clickjacking headers', 'Cookie flags', 'Mixed content & source maps', 'Vulnerable JS libraries'],
+  performance: ['Server response (TTFB)', 'Compression & caching', 'Render-blocking scripts', 'Layout-shift risk'],
   report: ['Issue aggregation', 'Launch readiness', 'Coverage', 'Launch decision'],
 };
 
@@ -135,6 +142,84 @@ function buildStageOutputs(
     case 'browser':
       if (metrics.browserChecksStatus != null)
         rows.push({ label: 'Browser checks', value: formatMetricValue(metrics.browserChecksStatus) });
+      if (metrics.consoleErrors != null)
+        rows.push({
+          label: 'Console errors',
+          value: formatMetricValue(metrics.consoleErrors),
+          highlight: Number(metrics.consoleErrors) > 0,
+        });
+      if (metrics.networkErrors != null)
+        rows.push({
+          label: 'Failed requests',
+          value: formatMetricValue(metrics.networkErrors),
+          highlight: Number(metrics.networkErrors) > 0,
+        });
+      break;
+    case 'exposure':
+      if (metrics.publicRoutes != null)
+        rows.push({ label: 'Public routes', value: formatMetricValue(metrics.publicRoutes) });
+      if (metrics.riskyRoutes != null)
+        rows.push({
+          label: 'Risky routes',
+          value: formatMetricValue(metrics.riskyRoutes),
+          highlight: Number(metrics.riskyRoutes) > 0,
+        });
+      break;
+    case 'ai_leftovers':
+      if (metrics.aiLeftovers != null)
+        rows.push({
+          label: 'Leftover artifacts',
+          value: formatMetricValue(metrics.aiLeftovers),
+          highlight: Number(metrics.aiLeftovers) > 0,
+        });
+      break;
+    case 'keys':
+      if (metrics.keyPatterns != null)
+        rows.push({
+          label: 'Exposed secrets',
+          value: formatMetricValue(metrics.keyPatterns),
+          highlight: Number(metrics.keyPatterns) > 0,
+        });
+      break;
+    case 'form_analysis':
+      if (metrics.forms != null)
+        rows.push({ label: 'Forms analyzed', value: formatMetricValue(metrics.forms) });
+      if (metrics.formIssues != null)
+        rows.push({
+          label: 'Form issues',
+          value: formatMetricValue(metrics.formIssues),
+          highlight: Number(metrics.formIssues) > 0,
+        });
+      break;
+    case 'security':
+      if (metrics.securityFindings != null)
+        rows.push({
+          label: 'Findings',
+          value: formatMetricValue(metrics.securityFindings),
+          highlight: Number(metrics.securityFindings) > 0,
+        });
+      if (metrics.criticalFindings != null)
+        rows.push({
+          label: 'Critical',
+          value: formatMetricValue(metrics.criticalFindings),
+          highlight: Number(metrics.criticalFindings) > 0,
+        });
+      if (metrics.warningFindings != null)
+        rows.push({ label: 'Warnings', value: formatMetricValue(metrics.warningFindings) });
+      break;
+    case 'performance':
+      if (metrics.ttfbMs != null)
+        rows.push({
+          label: 'TTFB',
+          value: `${metrics.ttfbMs} ms`,
+          highlight: Number(metrics.ttfbMs) >= 1500,
+        });
+      if (metrics.performanceFindings != null)
+        rows.push({
+          label: 'Signals',
+          value: formatMetricValue(metrics.performanceFindings),
+          highlight: Number(metrics.performanceFindings) > 0,
+        });
       break;
     case 'score':
       rows.push({
@@ -235,6 +320,8 @@ export function PipelineDetailPanel({ stage, allStages }: PipelineDetailPanelPro
         return 'Complete with warnings';
       case 'failed':
         return 'Failed';
+      case 'skipped':
+        return 'Skipped';
     }
   };
 
@@ -253,34 +340,13 @@ export function PipelineDetailPanel({ stage, allStages }: PipelineDetailPanelPro
     }
   };
 
-  const checks = STAGE_CHECKS[stage.id] || STAGE_CHECKS.score;
+  const checks = STAGE_CHECKS[stage.id] ?? [];
   const showOutputs =
     stageOutputs.length > 0 &&
     (stage.status === 'running' || stage.status === 'completed' || stage.status === 'warning');
 
-  const stageLog =
-    stage.evidenceLog?.filter((log) => {
-      const msg = log.message.toLowerCase();
-      const stageHints: Record<string, string[]> = {
-        init: ['normaliz', 'url', 'init'],
-        fetch: ['homepage', 'fetch', 'http'],
-        discover: ['discover', 'route'],
-        crawl: ['scanning page', 'crawl', 'pages'],
-        links: ['link', 'checking'],
-        seo: ['metadata', 'seo'],
-        social: ['share', 'og', 'preview'],
-        forms: ['form'],
-        browser: ['browser'],
-        score: ['robots', 'sitemap', 'index'],
-        report: ['launch', 'decision', 'complete', 'readiness', 'coverage'],
-      };
-      const hints = stageHints[stage.id];
-      if (!hints) return true;
-      return hints.some((h) => msg.includes(h));
-    }) ?? [];
-
-  const displayLog =
-    stageLog.length > 0 ? stageLog.slice(-24) : (stage.evidenceLog?.slice(-16) ?? []);
+  // Logs arrive pre-filtered per stage (tagged with stageId upstream)
+  const displayLog = stage.evidenceLog?.slice(-24) ?? [];
 
   return (
     <div className="h-full flex flex-col" style={{ backgroundColor: 'transparent' }}>
@@ -307,6 +373,22 @@ export function PipelineDetailPanel({ stage, allStages }: PipelineDetailPanelPro
             />
           )}
         </div>
+        {stage.statusMessage &&
+          (stage.status === 'skipped' || stage.status === 'failed' || stage.status === 'warning') && (
+            <div
+              className="mt-2 text-[12px] leading-relaxed"
+              style={{
+                color:
+                  stage.status === 'failed'
+                    ? colors.red
+                    : stage.status === 'warning'
+                      ? colors.amber
+                      : colors.textTertiary,
+              }}
+            >
+              {stage.statusMessage}
+            </div>
+          )}
       </div>
 
       {showOutputs && (
@@ -363,7 +445,7 @@ export function PipelineDetailPanel({ stage, allStages }: PipelineDetailPanelPro
           stage.status === 'warning' ||
           stage.status === 'failed') && (
           <div className="px-6 py-4 border-b ops-hairline">
-            <div className="ops-kicker mb-3">Checks</div>
+            <div className="ops-kicker mb-3">What this stage inspects</div>
             <div className="space-y-2">
               {checks.map((check, idx) => (
                 <div
@@ -377,13 +459,8 @@ export function PipelineDetailPanel({ stage, allStages }: PipelineDetailPanelPro
                   }}
                 >
                   <div
-                    className="mt-1.5 w-1.5 h-1.5 rounded-full flex-shrink-0"
-                    style={{
-                      backgroundColor:
-                        stage.status === 'completed' || stage.status === 'warning'
-                          ? colors.tealPrimary
-                          : 'rgba(255,255,255,0.25)',
-                    }}
+                    className="mt-1.5 w-1 h-1 rounded-full flex-shrink-0"
+                    style={{ backgroundColor: 'rgba(255,255,255,0.25)' }}
                   />
                   <div className="text-[13px] leading-relaxed" style={{ color: colors.textSecondary }}>
                     {check}
@@ -436,7 +513,9 @@ export function PipelineDetailPanel({ stage, allStages }: PipelineDetailPanelPro
                 ? 'Waiting for this stage…'
                 : stage.status === 'running'
                   ? 'Collecting evidence…'
-                  : 'No log entries for this stage'}
+                  : stage.status === 'skipped'
+                    ? stage.statusMessage || 'This stage was skipped'
+                    : 'No log entries for this stage'}
             </div>
           )}
           </div>

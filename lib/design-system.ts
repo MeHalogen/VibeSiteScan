@@ -93,30 +93,49 @@ export function getScoreTier(score: number) {
   return scoreTiers.certified;
 }
 
-// Pipeline stage weights for progress calculation
-export const stageWeights = {
-  init: 5,
-  fetch: 10,
-  discover: 12,
-  crawl: 18,
-  links: 15,
-  seo: 8,
-  social: 8,
-  forms: 5,
-  browser: 4,
-  score: 5,
-  report: 10,
+// Pipeline stage weights for progress calculation (rough relative durations)
+export const stageWeights: Record<string, number> = {
+  init: 3,
+  score: 4,
+  fetch: 8,
+  discover: 8,
+  crawl: 16,
+  links: 14,
+  browser: 10,
+  seo: 6,
+  social: 4,
+  forms: 4,
+  exposure: 4,
+  ai_leftovers: 3,
+  keys: 4,
+  form_analysis: 3,
+  security: 6,
+  performance: 5,
+  report: 6,
 };
 
+const DEFAULT_STAGE_WEIGHT = 5;
+
+/**
+ * Weighted scan progress. The denominator is derived from the stages actually
+ * passed in (not the static weight map), so the math stays correct if the
+ * stage list changes. Skipped stages count as resolved — a quick scan that
+ * skips the crawl still reaches 100%.
+ */
 export function calculateProgress(stages: Array<{ id: string; status: string }>): number {
-  const totalWeight = Object.values(stageWeights).reduce((a, b) => a + b, 0);
-  const completedWeight = stages.reduce((sum, stage) => {
-    const weight = stageWeights[stage.id as keyof typeof stageWeights] || 0;
-    const done =
+  if (stages.length === 0) return 0;
+  let totalWeight = 0;
+  let resolvedWeight = 0;
+  for (const stage of stages) {
+    const weight = stageWeights[stage.id] ?? DEFAULT_STAGE_WEIGHT;
+    totalWeight += weight;
+    const resolved =
       stage.status === 'completed' ||
       stage.status === 'warning' ||
-      stage.status === 'done';
-    return sum + (done ? weight : 0);
-  }, 0);
-  return Math.round((completedWeight / totalWeight) * 100);
+      stage.status === 'done' ||
+      stage.status === 'failed' ||
+      stage.status === 'skipped';
+    if (resolved) resolvedWeight += weight;
+  }
+  return Math.round((resolvedWeight / totalWeight) * 100);
 }

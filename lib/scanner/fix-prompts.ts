@@ -156,4 +156,60 @@ export const QUICK_FIX_TEMPLATES: Record<string, (ctx: {path: string; evidence?:
 
   console_error: ({ path, evidence }) =>
     `Fix the JavaScript console error on ${path}: "${evidence?.message || 'unknown error'}". Open your browser DevTools, reproduce the error, and trace it to its source. Do not change unrelated code.`,
+
+  // ─── Security ───────────────────────────────────────────────────────────────
+  missing_csp: () =>
+    `Add a Content-Security-Policy response header to the site. Start restrictive and only open up what you actually use:\nContent-Security-Policy: default-src 'self'; script-src 'self'; object-src 'none'; frame-ancestors 'self'; base-uri 'self'\nIf you load scripts/styles from a CDN, add that exact origin to script-src/style-src. Set this in your host config (Netlify _headers, Vercel headers, or next.config headers()). Do not use 'unsafe-inline' or 'unsafe-eval'. Test in report-only mode first (Content-Security-Policy-Report-Only) before enforcing.`,
+
+  weak_csp: ({ evidence }) =>
+    `Tighten the Content-Security-Policy — it currently allows unsafe-inline or unsafe-eval, which defeats XSS protection. Remove those keywords. Move inline <script> blocks into files served from your origin, or add a per-request nonce and reference it: script-src 'self' 'nonce-<RANDOM>'; then add nonce="<RANDOM>" to each script tag. Current policy: ${evidence?.value || 'n/a'}. Do not change page behavior — only how scripts are authorized.`,
+
+  missing_hsts: () =>
+    `Add HTTP Strict-Transport-Security to force HTTPS. Only enable once every subdomain is HTTPS-ready:\nStrict-Transport-Security: max-age=63072000; includeSubDomains; preload\nSet it in your host/CDN header config. Do not add includeSubDomains until all subdomains serve HTTPS.`,
+
+  missing_frame_protection: () =>
+    `Protect the site from clickjacking by restricting who can iframe it. Preferred (CSP):\nContent-Security-Policy: frame-ancestors 'self'\nOr, as a fallback header:\nX-Frame-Options: SAMEORIGIN\nAdd this in your host header config. If you intentionally embed the site elsewhere, list those origins in frame-ancestors instead of 'self'.`,
+
+  missing_x_content_type_options: () =>
+    `Add this response header to every route to stop MIME-sniffing:\nX-Content-Type-Options: nosniff\nSet it globally in your host/CDN header config.`,
+
+  missing_referrer_policy: () =>
+    `Add a Referrer-Policy header so full URLs (which may contain tokens) don't leak to third parties:\nReferrer-Policy: strict-origin-when-cross-origin\nSet it globally in your host/CDN header config.`,
+
+  missing_permissions_policy: () =>
+    `Add a Permissions-Policy header disabling browser features you don't use, so embedded scripts can't access them:\nPermissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()\nKeep entries you DO use (e.g. geolocation=(self)). Set it in your host/CDN header config.`,
+
+  insecure_cookie: ({ evidence }) =>
+    `Harden the cookie "${evidence?.cookieName || 'session'}" — it is missing ${(evidence?.missingFlags || []).join(', ') || 'security flags'}. Where you set it (server or auth library config), add the flags:\nSet-Cookie: ${evidence?.cookieName || 'session'}=...; Secure; HttpOnly; SameSite=Lax; Path=/\nUse SameSite=Strict if the cookie is never needed on cross-site navigation. Only relax to SameSite=None; Secure if you truly need cross-site sends.`,
+
+  mixed_content: ({ evidence }) =>
+    `Fix mixed content on an HTTPS page: it loads resources over plain http://. Change each to https:// (or a root-relative path). Insecure URLs found: ${(evidence?.insecureUrls || []).slice(0, 5).join(', ') || 'see report'}. Also add "upgrade-insecure-requests" to your Content-Security-Policy so any stragglers are auto-upgraded. Update hardcoded URLs, CMS embeds, and third-party snippets. Do not change layout.`,
+
+  exposed_source_map: ({ evidence }) =>
+    `Stop shipping source maps to production so your original source isn't downloadable. References found: ${(evidence?.references || []).slice(0, 3).join(', ') || 'sourceMappingURL in bundles'}. In your bundler, disable production source maps — webpack: devtool:false; Vite: build.sourcemap:false; Next.js: productionBrowserSourceMaps:false. Or keep them but stop deploying the .map files to the public host.`,
+
+  vulnerable_js_library: ({ evidence }) =>
+    `Upgrade ${evidence?.library || 'the library'} — version ${evidence?.version || '?'} has a known advisory (${evidence?.advisory || 'see report'}): ${evidence?.risk || ''} Update to ${evidence?.fixedIn || 'the latest patched version'} or newer, then redeploy and confirm the new version string in the page source. If it's loaded from a CDN URL, bump the version in that URL; if from npm, update the dependency and rebuild.`,
+
+  exposed_llm_surface: ({ evidence }) =>
+    `Your site exposes a public AI/chat surface (signals: ${(evidence?.signals || []).slice(0, 3).join(', ') || 'chat widget'}), which is a prompt-injection target. Harden it before launch: (1) never treat model output as a command — authorize every tool/API call server-side; (2) allow-list the tools and outputs the assistant can produce; (3) strip or refuse instructions embedded in user messages or retrieved/third-party content; (4) constrain and protect the system prompt; (5) add rate limiting and abuse monitoring. Review the OWASP LLM Top 10. This is an advisory — the scanner does not attack your assistant.`,
+
+  // ─── Performance ────────────────────────────────────────────────────────────
+  slow_ttfb: ({ evidence }) =>
+    `Reduce time-to-first-byte (measured ${evidence?.responseTimeMs || '?'} ms). Put a CDN/edge cache in front of the HTML where possible, cut the work the initial route does on the server, and check for serverless cold starts. If the page can be static or cached, add Cache-Control: s-maxage so the edge serves it. Profile the slow route to find the bottleneck. Don't change page content.`,
+
+  large_html_payload: ({ evidence }) =>
+    `Shrink the HTML document (currently ${evidence?.pageSizeBytes ? Math.round(evidence.pageSizeBytes / 1024) + ' KB' : 'large'}). Move big inline JSON/data blobs out of the initial HTML and fetch them, paginate very long lists, and ensure text compression is on. Keep the visible content the same — only reduce what ships in the first HTML response.`,
+
+  no_compression: () =>
+    `Enable text compression (gzip or brotli) for HTML/CSS/JS responses. On Netlify and Vercel this is automatic — verify it's not disabled. On your own server, enable it (Nginx: gzip on; brotli on;). Confirm afterward that responses include Content-Encoding: br or gzip.`,
+
+  weak_cache_headers: () =>
+    `Add caching headers. For fingerprinted static assets: Cache-Control: public, max-age=31536000, immutable. For HTML: Cache-Control: public, max-age=0, must-revalidate (or a short s-maxage at the edge). Set these in your host/CDN header config so repeat visits and assets aren't re-downloaded every time.`,
+
+  render_blocking_resources: ({ evidence }) =>
+    `Stop ${evidence?.blockingScripts || 'the'} render-blocking scripts in <head> from delaying first paint. Add defer to each (or async only where order doesn't matter), or move them to the end of <body>. type="module" scripts defer by default. Example: change <script src="app.js"> to <script src="app.js" defer>. Verify the page still initializes correctly.`,
+
+  images_missing_dimensions: ({ evidence }) =>
+    `Set explicit dimensions on images to stop layout shift (${evidence?.missingDimensions || 'several'} of ${evidence?.totalImages || 'the'} images are missing them). Add width and height attributes matching the image's intrinsic size, or set CSS aspect-ratio. If you use a framework Image component (Next.js/Nuxt), it sets these for you. Don't change how the images look — only reserve their space.`,
 };

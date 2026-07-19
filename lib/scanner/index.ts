@@ -7,7 +7,24 @@ import { buildPublicRouteMap, generateExposureFindings } from './rules/exposure-
 import { detectAILeftovers } from './rules/ai-leftover-rules';
 import { detectKeyPatterns } from './rules/key-pattern-rules';
 import { extractDetectedForms, generateFormFindings } from './rules/form-rules';
-import { generateFixPrompts } from './fix-prompts';
+import { analyzeSecurity } from './rules/security-rules';
+import { analyzePerformance } from './rules/performance-rules';
+import { certifyLaunch } from '@/lib/certification';
+import { generateFixPrompts, QUICK_FIX_TEMPLATES } from './fix-prompts';
+
+/**
+ * Resolve the copy-paste fix prompt for a security/performance issue code from
+ * the shared template table, falling back to a generic instruction.
+ */
+function buildFixPromptForCode(
+  code: string,
+  path: string,
+  evidence: Record<string, any>
+): string {
+  const template = QUICK_FIX_TEMPLATES[code];
+  if (template) return template({ path, evidence });
+  return `Review and fix "${code}" on ${path}. See the issue detail for guidance.`;
+}
 import type {
   ScanResult,
   PageData,
@@ -25,19 +42,11 @@ import type { AILeftoverFinding } from './rules/ai-leftover-rules';
 import type { KeyPatternFinding } from './rules/key-pattern-rules';
 import type { DetectedForm, FormFinding } from './rules/form-rules';
 import type { FixPrompt } from './fix-prompts';
+import type { ScanProgressEmitter } from '@/lib/scan-events';
 
 const USER_AGENT = 'VibeSiteScanBot/1.0 (+https://vibesitescan.app)';
 const TIMEOUT = 15000;
 const LINK_TIMEOUT = 10000;
-
-type ScanProgressEmitter = (event: {
-  type: 'log' | 'stage_start' | 'stage_progress' | 'stage_end';
-  stageId?: string;
-  message?: string;
-  severity?: 'info' | 'success' | 'warning' | 'error';
-  status?: 'completed' | 'warning' | 'failed' | 'skipped';
-  metrics?: Record<string, any>;
-}) => void;
 
 // Enhanced page fetching with timing and redirect tracking
 async function fetchPage(
@@ -50,6 +59,10 @@ async function fetchPage(
   status: number;
   responseTimeMs: number;
   contentType: string;
+  responseHeaders: Record<string, string>;
+  setCookies: string[];
+  pageSizeBytes: number;
+  redirected: boolean;
 }> {
   const startTime = Date.now();
   const controller = new AbortController();
@@ -67,12 +80,41 @@ async function fetchPage(
     const responseTimeMs = Date.now() - startTime;
     const contentType = response.headers.get('content-type') || 'text/html';
 
+    // Capture all response headers (lowercased keys) for passive security /
+    // performance analysis. Set-Cookie is collapsed by the Headers object, so
+    // pull the individual cookies via getSetCookie() when the runtime supports it.
+    const responseHeaders: Record<string, string> = {};
+    response.headers.forEach((value, key) => {
+      responseHeaders[key.toLowerCase()] = value;
+    });
+
+    let setCookies: string[] = [];
+    const headersWithCookies = response.headers as Headers & {
+      getSetCookie?: () => string[];
+    };
+    if (typeof headersWithCookies.getSetCookie === 'function') {
+      setCookies = headersWithCookies.getSetCookie();
+    } else if (responseHeaders['set-cookie']) {
+      setCookies = [responseHeaders['set-cookie']];
+    }
+
+    // Transfer weight: prefer content-length, else the delivered byte length.
+    const contentLength = Number(responseHeaders['content-length']);
+    const pageSizeBytes =
+      Number.isFinite(contentLength) && contentLength > 0
+        ? contentLength
+        : Buffer.byteLength(html, 'utf8');
+
     return {
       finalUrl: response.url || url,
       html,
       status: response.status,
       responseTimeMs,
       contentType,
+      responseHeaders,
+      setCookies,
+      pageSizeBytes,
+      redirected: response.redirected,
     };
   } finally {
     clearTimeout(timeoutId);
@@ -199,6 +241,38 @@ function classifyLinkType(href: string): LinkCheck['linkType'] {
 }
 
 // Enhanced link checking with detailed tracking
+/**
+ * Classify an HTTP status for link health.
+ *
+ * A link is "broken" ONLY when the destination is genuinely gone (404/410).
+ * Everything else that isn't 2xx/3xx — 401/403 (auth or permission required),
+ * 405 (HEAD not allowed), 429 (WE are being rate-limited), 451, 503, 999
+ * (bot challenge), or a network error/timeout — means "we could not verify",
+ * NOT "the link is dead". Counting those as broken produced false criticals on
+ * bot-hostile sites (e.g. GitHub) and is exactly the kind of false positive
+ * that destroys trust in the certificate.
+ */
+function classifyLinkHealth(
+  status: number,
+  networkError = false
+): { isBroken: boolean; unverified: boolean; reason?: string } {
+  if (networkError) {
+    return { isBroken: false, unverified: true, reason: 'No response (timeout or network error)' };
+  }
+  if (status >= 200 && status < 400) {
+    return { isBroken: false, unverified: false };
+  }
+  if (status === 404 || status === 410) {
+    return { isBroken: true, unverified: false, reason: `HTTP ${status}` };
+  }
+  // Access-restricted / throttled / server hiccup — not a dead link.
+  return {
+    isBroken: false,
+    unverified: true,
+    reason: `HTTP ${status} (access restricted or rate-limited — not counted as broken)`,
+  };
+}
+
 async function checkLink(
   sourceUrl: string,
   targetUrl: string,
@@ -247,6 +321,7 @@ async function checkLink(
       const responseTimeMs = Date.now() - startTime;
       const finalUrl = response.url || targetUrl;
       const isRedirect = finalUrl !== targetUrl;
+      const health = classifyLinkHealth(response.status);
 
       return {
         sourceUrl,
@@ -258,11 +333,12 @@ async function checkLink(
         linkType,
         status: response.status,
         ok: response.status >= 200 && response.status < 400,
-        isBroken: response.status >= 400,
+        isBroken: health.isBroken,
         isRedirect,
         redirectChain: isRedirect ? [targetUrl, finalUrl] : undefined,
         checkedMethod: 'HEAD',
         responseTimeMs,
+        ignoredReason: health.unverified ? health.reason : undefined,
       };
     } catch (headError) {
       // Fallback to GET if HEAD fails
@@ -281,6 +357,7 @@ async function checkLink(
       const responseTimeMs = Date.now() - startTime;
       const finalUrl = response.url || targetUrl;
       const isRedirect = finalUrl !== targetUrl;
+      const health = classifyLinkHealth(response.status);
 
       return {
         sourceUrl,
@@ -292,15 +369,19 @@ async function checkLink(
         linkType,
         status: response.status,
         ok: response.status >= 200 && response.status < 400,
-        isBroken: response.status >= 400,
+        isBroken: health.isBroken,
         isRedirect,
         redirectChain: isRedirect ? [targetUrl, finalUrl] : undefined,
         checkedMethod: 'GET',
         responseTimeMs: Date.now() - startTime,
+        ignoredReason: health.unverified ? health.reason : undefined,
       };
     }
   } catch (error) {
     clearTimeout(timeoutId);
+    // Network error / timeout — we could not verify. NOT a dead link: many live
+    // sites time out under rapid checking or block our bot. Do not count broken.
+    const health = classifyLinkHealth(0, true);
     return {
       sourceUrl,
       anchorText,
@@ -311,10 +392,11 @@ async function checkLink(
       linkType,
       status: 0,
       ok: false,
-      isBroken: true,
+      isBroken: health.isBroken,
       isRedirect: false,
       checkedMethod: 'GET',
       responseTimeMs: Date.now() - startTime,
+      ignoredReason: health.reason,
       error: error instanceof Error ? error.message : String(error),
     };
   }
@@ -786,7 +868,7 @@ function calculateScore(issues: Issue[]): number {
 export async function runScan(
   targetUrl: string,
   depth: 'quick' | 'standard' = 'quick',
-  opts?: { onProgress?: ScanProgressEmitter }
+  opts?: { onProgress?: ScanProgressEmitter; shouldStop?: () => boolean }
 ): Promise<ScanResult> {
   const startTime = Date.now();
   const emit: ScanProgressEmitter = (evt) => {
@@ -795,6 +877,22 @@ export async function runScan(
     } catch {
       // never let progress reporting break scan execution
     }
+  };
+
+  // Cooperative stop: the user can stop a scan mid-flight. We honor it inside
+  // the network-bound loops (page crawl, link checking) where scans spend their
+  // time, then finalize a PARTIAL report at exactly that point — no error, and
+  // the certificate is forced to "unverified" because the scan is incomplete.
+  let stopRequested = false;
+  let stoppedAtStage: string | undefined;
+  const checkStop = (stage: string): boolean => {
+    if (stopRequested) return true;
+    if (opts?.shouldStop?.()) {
+      stopRequested = true;
+      stoppedAtStage = stage;
+      return true;
+    }
+    return false;
   };
 
   // Normalize and validate URL
@@ -827,11 +925,19 @@ export async function runScan(
     const commonSitemapUrl = `${parsedUrl.protocol}//${parsedUrl.host}/sitemap.xml`;
     sitemapData = await checkSitemap(commonSitemapUrl);
   }
+  const sitemapFound = sitemapData?.sitemapFound || false;
   emit({
     type: 'stage_end',
     stageId: 'score',
-    status: 'completed',
-    metrics: { robotsFound: robotsData.robotsFound, sitemapFound: sitemapData?.sitemapFound || false },
+    status: robotsData.robotsFound && sitemapFound ? 'completed' : 'warning',
+    message: !robotsData.robotsFound && !sitemapFound
+      ? 'robots.txt and sitemap.xml missing'
+      : !robotsData.robotsFound
+        ? 'robots.txt missing'
+        : !sitemapFound
+          ? 'sitemap.xml missing'
+          : undefined,
+    metrics: { robotsFound: robotsData.robotsFound, sitemapFound },
   });
 
   // Fetch homepage
@@ -865,9 +971,20 @@ export async function runScan(
       internalLinksCount,
       externalLinksCount,
       formCount: forms.length,
+      pageSizeBytes: homepage.pageSizeBytes,
+      responseHeaders: homepage.responseHeaders,
+      setCookies: homepage.setCookies,
+      redirected: homepage.redirected,
     });
 
     discoveredUrls.add(rootUrl);
+    // Real evidence line for the live terminal feed.
+    emit({
+      type: 'log',
+      stageId: 'fetch',
+      severity: homepage.status >= 200 && homepage.status < 400 ? 'success' : 'warning',
+      message: `GET / → ${homepage.status} · ${homepage.responseTimeMs}ms · ${(homepage.pageSizeBytes / 1024).toFixed(0)}KB`,
+    });
     emit({
       type: 'stage_end',
       stageId: 'fetch',
@@ -901,6 +1018,7 @@ export async function runScan(
 
       emit({ type: 'stage_start', stageId: 'crawl', message: 'Scanning pages' });
       for (const url of urlsToFetch) {
+        if (checkStop('crawl')) break; // user stopped — keep pages fetched so far
         try {
           const pageData = await fetchPage(url, rootUrl, 'discovered from homepage');
           const pageSeo = analyzeSeo(url, pageData.html);
@@ -929,6 +1047,10 @@ export async function runScan(
             internalLinksCount: pageInternalLinksCount,
             externalLinksCount: pageExternalLinksCount,
             formCount: pageForms.length,
+            pageSizeBytes: pageData.pageSizeBytes,
+            responseHeaders: pageData.responseHeaders,
+            setCookies: pageData.setCookies,
+            redirected: pageData.redirected,
           });
         } catch (error) {
           // Add page with error status
@@ -977,10 +1099,18 @@ export async function runScan(
           });
         }
 
+        const justFetched = pages[pages.length - 1];
+        const pth = (() => { try { return new URL(url).pathname; } catch { return url; } })();
+        emit({
+          type: 'log',
+          stageId: 'crawl',
+          severity: justFetched.statusCode >= 200 && justFetched.statusCode < 400 ? 'info' : 'warning',
+          message: `GET ${pth} → ${justFetched.statusCode || 'ERR'}${justFetched.responseTimeMs ? ` · ${justFetched.responseTimeMs}ms` : ''}`,
+        });
         emit({
           type: 'stage_progress',
           stageId: 'crawl',
-          metrics: { pagesScanned: pages.length, totalPlanned: discoveredUrls.size },
+          metrics: { pagesScanned: pages.length, totalPlanned: discoveredUrls.size, lastPath: pth },
         });
       }
       emit({
@@ -1070,6 +1200,7 @@ export async function runScan(
   const linksToCheck = Array.from(allLinksToCheck.entries()).slice(0, 200);
   let checked = 0;
   for (const [url, linkInfo] of linksToCheck) {
+    if (checkStop('links')) break; // user stopped — keep links checked so far
     const result = await checkLink(
       linkInfo.sourceUrl,
       url,
@@ -1079,11 +1210,32 @@ export async function runScan(
     );
     allLinks.push(result);
     checked++;
+    // Surface the interesting links (dead or access-restricted) in the feed.
+    const linkPath = (() => { try { return new URL(result.targetUrl).pathname || result.targetUrl; } catch { return result.targetUrl; } })();
+    if (result.isBroken) {
+      emit({ type: 'log', stageId: 'links', severity: 'error', message: `✗ ${linkPath} → ${result.status} broken` });
+    } else if (result.ignoredReason && result.status && result.status >= 400) {
+      emit({ type: 'log', stageId: 'links', severity: 'warning', message: `⚠ ${linkPath} → ${result.status} (restricted, not broken)` });
+    }
     if (checked % 10 === 0 || checked === linksToCheck.length) {
       emit({ type: 'stage_progress', stageId: 'links', metrics: { linksChecked: checked, linksTotal: linksToCheck.length } });
     }
   }
-  emit({ type: 'stage_end', stageId: 'links', status: 'completed', metrics: { linksChecked: linksToCheck.length, linksTotal: linksToCheck.length } });
+  const brokenInternalNow = allLinks.filter((l) => l.linkType === 'internal' && l.isBroken).length;
+  const brokenExternalNow = allLinks.filter((l) => l.linkType === 'external' && l.isBroken).length;
+  const brokenTotal = brokenInternalNow + brokenExternalNow;
+  emit({
+    type: 'stage_end',
+    stageId: 'links',
+    status: brokenTotal > 0 ? 'warning' : 'completed',
+    message: brokenTotal > 0 ? `${brokenTotal} broken link${brokenTotal === 1 ? '' : 's'} found` : undefined,
+    metrics: {
+      linksChecked: linksToCheck.length,
+      linksTotal: linksToCheck.length,
+      brokenInternalLinksCount: brokenInternalNow,
+      brokenExternalLinksCount: brokenExternalNow,
+    },
+  });
 
   // Browser checks with Playwright
   emit({ type: 'stage_start', stageId: 'browser', message: 'Running browser health checks' });
@@ -1095,12 +1247,29 @@ export async function runScan(
     failedNetworkRequests: [],
   };
 
+  // Load the browser engine separately from running it: a missing engine is
+  // an environment limitation (skipped), not a failure of the target site.
+  let scanWithBrowser: typeof import('./browserScanner').scanWithBrowser | undefined;
   try {
-    const { scanWithBrowser } = await import('./browserScanner');
-    const browserResult = await scanWithBrowser({ 
-      url: rootUrl, 
+    ({ scanWithBrowser } = await import('./browserScanner'));
+  } catch {
+    scanWithBrowser = undefined;
+  }
+
+  if (!scanWithBrowser) {
+    emit({
+      type: 'stage_end',
+      stageId: 'browser',
+      status: 'skipped',
+      message: 'Browser engine not available in this environment',
+      metrics: { browserChecksStatus: 'skipped' },
+    });
+  } else {
+  try {
+    const browserResult = await scanWithBrowser({
+      url: rootUrl,
       timeout: 15000,
-      screenshot: false 
+      screenshot: false
     });
 
     browserChecks.browserChecksStatus = 'completed';
@@ -1126,19 +1295,39 @@ export async function runScan(
       error: err.errorText 
     }));
 
-    emit({ 
-      type: 'stage_end', 
-      stageId: 'browser', 
-      status: 'completed', 
-      metrics: { 
+    const browserProblems =
+      browserChecks.consoleErrors.length + browserChecks.failedNetworkRequests.length;
+    emit({
+      type: 'stage_end',
+      stageId: 'browser',
+      status: browserProblems > 0 ? 'warning' : 'completed',
+      message: browserProblems > 0
+        ? `${browserChecks.consoleErrors.length} console error(s), ${browserChecks.failedNetworkRequests.length} failed request(s)`
+        : undefined,
+      metrics: {
+        browserChecksStatus: 'completed',
         consoleErrors: browserChecks.consoleErrors.length,
         consoleWarnings: browserChecks.consoleWarnings.length,
         networkErrors: browserChecks.failedNetworkRequests.length
-      } 
+      }
     });
   } catch (error) {
     console.warn('Browser checks failed:', error);
-    emit({ type: 'stage_end', stageId: 'browser', status: 'failed', message: 'Browser checks failed' });
+    const reason = error instanceof Error ? error.message : 'Browser checks failed';
+    // Playwright launch problems (missing executable, sandbox limits) are
+    // environment issues, not findings about the scanned site.
+    const isEnvironmentIssue = /executable|browserType\.launch|failed to launch|not installed|npx playwright install/i.test(reason);
+    browserChecks.browserChecksStatus = isEnvironmentIssue ? 'skipped' : 'failed';
+    emit({
+      type: 'stage_end',
+      stageId: 'browser',
+      status: isEnvironmentIssue ? 'skipped' : 'failed',
+      message: isEnvironmentIssue
+        ? 'Browser engine not available in this environment'
+        : `Browser checks failed: ${reason}`,
+      metrics: { browserChecksStatus: browserChecks.browserChecksStatus },
+    });
+  }
   }
 
   // Generate issues using knowledge base
@@ -1146,9 +1335,32 @@ export async function runScan(
   emit({ type: 'stage_start', stageId: 'social', message: 'Analyzing share preview' });
   emit({ type: 'stage_start', stageId: 'forms', message: 'Analyzing forms' });
   const issues = generateEnhancedIssues(rootUrl, pages, allLinks, formChecks);
-  emit({ type: 'stage_end', stageId: 'forms', status: 'completed', metrics: { formsFoundCount: formChecks.length } });
-  emit({ type: 'stage_end', stageId: 'seo', status: 'completed', metrics: { pagesAnalyzed: pages.length } });
-  emit({ type: 'stage_end', stageId: 'social', status: 'completed', metrics: { pagesAnalyzed: pages.length } });
+  const issueCountByCategory = (category: string) =>
+    issues.filter((i) => i.category === category).length;
+  const formsIssueCount = issueCountByCategory('forms');
+  const seoIssueCount = issueCountByCategory('seo');
+  const socialIssueCount = issueCountByCategory('social');
+  emit({
+    type: 'stage_end',
+    stageId: 'forms',
+    status: formsIssueCount > 0 ? 'warning' : 'completed',
+    message: formsIssueCount > 0 ? `${formsIssueCount} form issue(s) found` : undefined,
+    metrics: { formsFoundCount: formChecks.length, issuesFound: formsIssueCount },
+  });
+  emit({
+    type: 'stage_end',
+    stageId: 'seo',
+    status: seoIssueCount > 0 ? 'warning' : 'completed',
+    message: seoIssueCount > 0 ? `${seoIssueCount} metadata issue(s) found` : undefined,
+    metrics: { pagesAnalyzed: pages.length, issuesFound: seoIssueCount },
+  });
+  emit({
+    type: 'stage_end',
+    stageId: 'social',
+    status: socialIssueCount > 0 ? 'warning' : 'completed',
+    message: socialIssueCount > 0 ? `${socialIssueCount} share preview issue(s) found` : undefined,
+    metrics: { pagesAnalyzed: pages.length, issuesFound: socialIssueCount },
+  });
 
   // Add robots.txt and sitemap issues if missing
   if (!robotsData.robotsFound) {
@@ -1201,7 +1413,8 @@ export async function runScan(
   emit({
     type: 'stage_end',
     stageId: 'exposure',
-    status: 'completed',
+    status: riskyRoutes.length > 0 ? 'warning' : 'completed',
+    message: riskyRoutes.length > 0 ? `${riskyRoutes.length} risky route(s) publicly reachable` : undefined,
     metrics: { publicRoutes: publicRoutes.length, riskyRoutes: riskyRoutes.length },
   });
 
@@ -1213,7 +1426,8 @@ export async function runScan(
   emit({
     type: 'stage_end',
     stageId: 'ai_leftovers',
-    status: 'completed',
+    status: aiLeftoverFindings.length > 0 ? 'warning' : 'completed',
+    message: aiLeftoverFindings.length > 0 ? `${aiLeftoverFindings.length} leftover artifact(s) found` : undefined,
     metrics: { aiLeftovers: aiLeftoverFindings.length },
   });
 
@@ -1225,7 +1439,8 @@ export async function runScan(
   emit({
     type: 'stage_end',
     stageId: 'keys',
-    status: 'completed',
+    status: keyPatternFindings.length > 0 ? 'warning' : 'completed',
+    message: keyPatternFindings.length > 0 ? `${keyPatternFindings.length} potential exposed secret(s) detected` : undefined,
     metrics: { keyPatterns: keyPatternFindings.length },
   });
 
@@ -1242,8 +1457,106 @@ export async function runScan(
   emit({
     type: 'stage_end',
     stageId: 'form_analysis',
-    status: 'completed',
+    status: formFindings.length > 0 ? 'warning' : 'completed',
+    message: formFindings.length > 0 ? `${formFindings.length} form safety issue(s) found` : undefined,
     metrics: { forms: enhancedForms.length, formIssues: formFindings.length },
+  });
+
+  // ── Passive security analysis ───────────────────────────────────────────────
+  emit({ type: 'stage_start', stageId: 'security', message: 'Running passive security checks' });
+  const securityPageInputs = pages.map((p) => ({
+    url: p.url,
+    finalUrl: p.finalUrl,
+    statusCode: p.statusCode,
+    html: p.html,
+    responseHeaders: p.responseHeaders,
+    setCookies: p.setCookies,
+    redirected: p.redirected,
+    isHomepage: p.crawlDepth === 0,
+  }));
+  const securityFindings = analyzeSecurity(securityPageInputs);
+  // Fold security findings into the scored issue list so they affect readiness,
+  // and surface each in the live feed as it's found.
+  for (const f of securityFindings) {
+    emit({
+      type: 'log',
+      stageId: 'security',
+      severity: f.severity === 'critical' ? 'error' : f.severity === 'warning' ? 'warning' : 'info',
+      message: `${f.severity === 'critical' ? '✗' : f.severity === 'warning' ? '⚠' : '·'} ${f.title}`,
+    });
+    try {
+      issues.push(
+        createIssueFromCode(f.issueCode, f.pageUrl, f.whatFound, f.evidence, {
+          defaultSeverity: f.severity,
+        })
+      );
+    } catch {
+      // Unknown code — skip rather than break the scan.
+    }
+  }
+  if (securityFindings.length === 0) {
+    emit({ type: 'log', stageId: 'security', severity: 'success', message: '✓ No security gaps detected in delivered headers/content' });
+  }
+  const securityCritical = securityFindings.filter((f) => f.severity === 'critical').length;
+  const securityWarnings = securityFindings.filter((f) => f.severity === 'warning').length;
+  emit({
+    type: 'stage_end',
+    stageId: 'security',
+    status: securityCritical > 0 ? 'warning' : securityFindings.length > 0 ? 'warning' : 'completed',
+    message:
+      securityFindings.length > 0
+        ? `${securityFindings.length} security finding(s)` +
+          (securityCritical > 0 ? ` — ${securityCritical} critical` : '')
+        : 'No security issues detected',
+    metrics: {
+      securityFindings: securityFindings.length,
+      criticalFindings: securityCritical,
+      warningFindings: securityWarnings,
+    },
+  });
+
+  // ── Passive performance analysis ────────────────────────────────────────────
+  emit({ type: 'stage_start', stageId: 'performance', message: 'Measuring performance signals' });
+  const performanceInputs = pages.map((p) => ({
+    url: p.url,
+    finalUrl: p.finalUrl,
+    statusCode: p.statusCode,
+    html: p.html,
+    responseTimeMs: p.responseTimeMs,
+    pageSizeBytes: p.pageSizeBytes,
+    responseHeaders: p.responseHeaders,
+    isHomepage: p.crawlDepth === 0,
+  }));
+  const performanceFindings = analyzePerformance(performanceInputs);
+  for (const f of performanceFindings) {
+    emit({
+      type: 'log',
+      stageId: 'performance',
+      severity: f.severity === 'warning' ? 'warning' : 'info',
+      message: `${f.severity === 'warning' ? '⚠' : '·'} ${f.title}`,
+    });
+    try {
+      issues.push(
+        createIssueFromCode(f.issueCode, f.pageUrl, f.whatFound, f.evidence, {
+          defaultSeverity: f.severity,
+        })
+      );
+    } catch {
+      // Unknown code — skip.
+    }
+  }
+  emit({
+    type: 'stage_end',
+    stageId: 'performance',
+    status: performanceFindings.length > 0 ? 'warning' : 'completed',
+    message:
+      performanceFindings.length > 0
+        ? `${performanceFindings.length} performance signal(s)`
+        : 'No performance issues detected',
+    metrics: {
+      performanceFindings: performanceFindings.length,
+      ttfbMs: pages.find((p) => p.crawlDepth === 0)?.responseTimeMs ?? null,
+    },
   });
 
   // Generate fix prompts for all new finding types
@@ -1252,6 +1565,22 @@ export async function runScan(
     ...aiLeftoverFindings,
     ...keyPatternFindings,
     ...formFindings,
+    ...securityFindings.map((f) => ({
+      id: f.id,
+      ruleId: f.ruleId,
+      pageUrl: f.pageUrl,
+      path: f.path,
+      title: f.title,
+      fixPrompt: buildFixPromptForCode(f.issueCode, f.path, f.evidence),
+    })),
+    ...performanceFindings.map((f) => ({
+      id: f.id,
+      ruleId: f.ruleId,
+      pageUrl: f.pageUrl,
+      path: f.path,
+      title: f.title,
+      fixPrompt: buildFixPromptForCode(f.issueCode, f.path, f.evidence),
+    })),
   ];
   const fixPrompts = generateFixPrompts(allNewFindings, ['generic', 'cursor', 'lovable', 'bolt']);
 
@@ -1277,10 +1606,14 @@ export async function runScan(
   // Calculate traditional score for backwards compatibility
   const legacyScore = calculateScore(issues);
 
-  // Build scan result object for launch readiness calculation
+  // Build scan result object for launch readiness calculation.
+  // NOTE: `pages` MUST be included — the coverage assessors inspect real page
+  // data (statusCode, seo, html). Without it, page-level coverage silently
+  // reported "not captured" for every scan.
   const scanResultForReadiness = {
     target_url: rootUrl,
     scan_depth: depth,
+    pages,
     pages_count: pages.length,
     issues,
     discovered_pages_count: discoveredUrls.size,
@@ -1296,12 +1629,40 @@ export async function runScan(
     browser_checks_status: browserChecks.browserChecksStatus,
     robots_found: robotsData.robotsFound,
     sitemap_found: sitemapData?.sitemapFound || false,
-    blocked_requests_count: 0,
-    skipped_checks_count: 0,
+    // Real counts, not placeholders: pages we tried to fetch but couldn't, and
+    // checks we genuinely skipped (browser engine, quick-mode crawl/external).
+    blocked_requests_count: pages.filter((p) => p.statusCode === 0).length,
+    skipped_checks_count:
+      (browserChecks.browserChecksStatus === 'skipped' ? 1 : 0) +
+      (depth === 'quick' ? 2 : 0),
+    // Security & performance evidence for coverage assessment
+    security_findings_count: securityFindings.length,
+    security_headers_captured: !!pages.find((p) => p.crawlDepth === 0)?.responseHeaders,
+    performance_findings_count: performanceFindings.length,
+    homepage_ttfb_ms: pages.find((p) => p.crawlDepth === 0)?.responseTimeMs ?? null,
   };
 
   // Calculate launch readiness
   const launchReadiness = calculateLaunchReadiness(scanResultForReadiness);
+
+  // Derive the certification (green-light gate + pillar grades) from the
+  // genuine readiness + issue data. Single source of truth: lib/certification.
+  const certification = certifyLaunch(launchReadiness, issues, new Date().toISOString());
+
+  // A stopped scan is incomplete by definition — never let a partial scan show
+  // a passing/graded certificate (it would look "cleaner" simply because later
+  // checks never ran). Force it to unverified and say why.
+  if (stopRequested) {
+    certification.gate = 'unverified';
+    certification.overallGrade = null;
+    certification.headline = 'Stopped early — incomplete scan';
+    certification.reasons = [
+      `You stopped the scan during the "${stoppedAtStage || 'scan'}" stage.`,
+      'Results below reflect only what was checked before you stopped. Run a full scan to get a certificate.',
+      ...certification.reasons,
+    ];
+  }
+
   emit({
     type: 'stage_end',
     stageId: 'report',
@@ -1311,6 +1672,8 @@ export async function runScan(
       issuesCount: issues.length,
       coverage: launchReadiness.scanCoverage,
       decision: launchReadiness.launchDecision,
+      certificationGate: certification.gate,
+      overallGrade: certification.overallGrade ?? '—',
       aiLeftovers: aiLeftoverFindings.length,
       riskyRoutes: riskyRoutes.length,
       keyPatterns: keyPatternFindings.length,
@@ -1318,12 +1681,15 @@ export async function runScan(
   });
 
   return {
+    partial: stopRequested,
+    stoppedAtStage,
     rootUrl,
     pages,
     linkResults: allLinks,
     issues,
     score: legacyScore,
     launchReadiness,
+    certification,
     durationMs,
     consoleEvents,
     formChecks,
@@ -1337,6 +1703,8 @@ export async function runScan(
     keyPatternFindings,
     enhancedForms,
     formFindings,
+    securityFindings,
+    performanceFindings,
     fixPrompts,
     // Summary stats
     discoveredPagesCount: discoveredUrls.size,
