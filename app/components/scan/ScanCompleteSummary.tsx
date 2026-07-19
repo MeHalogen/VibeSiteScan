@@ -177,9 +177,12 @@ export function ScanCompleteSummary({
     );
   }
 
-  // Determine display based on score mode
-  // Only treat as diagnostic when target fit is actually limited — not just because coverage is low
-  const isDiagnosticOnly = targetFit === 'limited' && (scoreMode === 'diagnostic_only' || launchDecision === 'diagnostic_only');
+  // A diagnostic_only decision always means no readiness decision was assigned,
+  // whether it was caused by limited target fit, low coverage, or limited confidence
+  // (see determineScoreMode in lib/launch-readiness/scoring.ts). The cause only
+  // changes the explanation copy, keyed off isLimitedFit below.
+  const isDiagnosticOnly = scoreMode === 'diagnostic_only' || launchDecision === 'diagnostic_only';
+  const isLimitedFit = targetFit === 'limited';
 
   // Get launch decision colors and icons
   const getLaunchDecisionConfig = () => {
@@ -224,10 +227,9 @@ export function ScanCompleteSummary({
           label: 'Diagnostic Report Only',
           // Say why the decision is withheld — target fit and low coverage are
           // different reasons and must not be conflated.
-          message:
-            targetFit === 'limited'
-              ? 'This site is outside our ideal target. We checked what we could, but we are not assigning a share-readiness decision.'
-              : 'We could not verify enough of the checklist to responsibly assign a share-readiness decision. See coverage below.',
+          message: isLimitedFit
+            ? 'This site is outside our ideal target. We checked what we could, but we are not assigning a share-readiness decision.'
+            : 'We could not verify enough of the checklist to responsibly assign a share-readiness decision. See coverage below.',
         };
       default:
         return {
@@ -356,8 +358,30 @@ export function ScanCompleteSummary({
           </div>
         )}
 
-        {/* Diagnostic Only Explanation Banner */}
-        {isDiagnosticOnly && targetFit === 'limited' && (
+        {/* Diagnostic Only Explanation Banner (low coverage / limited confidence) */}
+        {isDiagnosticOnly && !isLimitedFit && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="mb-8 intel-panel-dark rounded-2xl p-6 border-l-4 border-blue-500"
+          >
+            <div className="flex gap-4">
+              <Info className="w-6 h-6 text-blue-400 flex-shrink-0 mt-1" />
+              <div>
+                <h3 className="text-blue-400 font-bold mb-3 text-lg">Why this result is diagnostic only</h3>
+                <p className="text-secondary mb-3 leading-relaxed">
+                  This scan could only verify {scanCoverage ?? 0}% of the checklist{resultConfidence ? ` with ${resultConfidence} confidence` : ''}. That is too little evidence to score launch readiness fairly, so rather than guess, we report only the findings we verified.
+                </p>
+                <p className="text-secondary leading-relaxed">
+                  Skipped or unavailable checks reduce coverage and confidence — not your site&rsquo;s quality. Re-running the scan, or choosing a deeper scan mode, usually raises coverage.
+                </p>
+              </div>
+            </div>
+          </motion.div>
+        )}
+
+        {/* Diagnostic Only Explanation Banner (limited target fit) */}
+        {isDiagnosticOnly && isLimitedFit && (
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
@@ -668,8 +692,30 @@ export function ScanCompleteSummary({
           </div>
         )}
 
-        {/* CTA Section for Diagnostic Only */}
-        {isDiagnosticOnly && (
+        {/* CTA Section for Diagnostic Only (low coverage / limited confidence) */}
+        {isDiagnosticOnly && !isLimitedFit && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.8 }}
+            className="intel-panel-dark rounded-2xl p-8 mb-8 text-center border-2 border-blue-500/30"
+          >
+            <h3 className="text-blue-400 font-bold text-2xl mb-3">Want a full readiness decision?</h3>
+            <p className="text-secondary mb-6 max-w-2xl mx-auto">
+              This site fits our target — the scan just could not verify enough of the checklist this run. Re-run the scan, or choose a deeper scan mode, to raise coverage and get a launch-readiness decision.
+            </p>
+            <button
+              onClick={onRetry}
+              className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-500 hover:to-blue-600 text-white font-bold rounded-lg transition-all font-mono"
+            >
+              <RotateCcw className="w-5 h-5" />
+              RE-RUN SCAN
+            </button>
+          </motion.div>
+        )}
+
+        {/* CTA Section for Diagnostic Only (limited target fit) */}
+        {isDiagnosticOnly && isLimitedFit && (
           <motion.div
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
